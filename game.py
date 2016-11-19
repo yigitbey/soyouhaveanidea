@@ -9,8 +9,8 @@ class Resource(object):
 class EntityMeta(type):
     def __new__(cls, clsname, superclasses, attributedict):
         clss = type.__new__(cls, clsname, superclasses, attributedict)
-        if 'wage' in attributedict:
-            clss.message = "{} (${} monthly)".format(attributedict['formatted'], attributedict['wage'])
+        if 'cost' in attributedict:
+            clss.message = "{} (${} monthly)".format(attributedict['formatted'], attributedict['cost'])
         else:
             clss.message = "{}".format(attributedict['formatted'])
         return clss
@@ -22,7 +22,7 @@ class Entity(object, metaclass=EntityMeta):
     unlocked = False
     unlocks_entities = []
     locks_entities = []
-    wage = 0
+    cost = 0
     formatted = "Entity"
     drains = {}
     replenishes = {}
@@ -91,7 +91,7 @@ class Entity(object, metaclass=EntityMeta):
 
 class Person(Entity):
     limit = -1
-    wage = 0
+    cost = 0
     formatted = "Person"
 
     def __init__(self, **kwargs):
@@ -109,7 +109,7 @@ class Person(Entity):
 class Developer(Person):
     limit = -1
     formatted = "Developer"
-    wage = 0
+    cost = 0
     action_str = "Hire"
 
     introduces = {}
@@ -129,22 +129,25 @@ class Developer(Person):
 class StudentDeveloper(Developer):
     limit = 3
     formatted = "Student Developer"
-    wage = 0
+    cost = 0
 
-    introduces = {"bugs": 10}
-    develops = {"features": 5}
+    introduces = {
+        "bugs": 2,
+        "technical_debt": 3,
+    }
+    develops = {"features": 1}
 
 
 class ShittyDeveloper(Developer):
     limit = -1
     formatted = "Shitty Developer"
-    wage = 5
+    cost = 5
 
 
 class MediocreDeveloper(Developer):
     limit = -1
     formatted = "Mediocre Developer"
-    wage = 10
+    cost = 10
 
 
 class Project(Entity):

@@ -31,6 +31,9 @@ def multiple_choice(question, choices):
 
     answer = int(input())
 
+    print()
+    print()
+
     if answer == nothing_choice:
         return None
     else:
