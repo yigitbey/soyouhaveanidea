@@ -1,5 +1,5 @@
 import copy
-
+from exceptions import *
 
 class EntityMeta(type):
     def __new__(mcs, clsname, superclasses, attributedict):
@@ -28,7 +28,7 @@ class Entity(object, metaclass=EntityMeta):
 
         if self.__class__.limit >= 0:
             if self.__class__.current_amount >= self.__class__.limit:
-                raise Entity.TooManyEntitiesException("No limit for {}".format(self.__class__.__name__))
+                raise TooManyEntitiesException("No limit for {}".format(self.__class__.__name__))
 
         self.inventory = copy.deepcopy(inventory)
         self.draining = copy.deepcopy(draining)
@@ -90,5 +90,4 @@ class Entity(object, metaclass=EntityMeta):
 
         return False
 
-    class TooManyEntitiesException(Exception):
-        pass
+
