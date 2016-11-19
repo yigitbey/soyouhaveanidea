@@ -1,8 +1,9 @@
 def cli(objects, entities):
     player = objects[0]
+    project = objects[1]
 
-    print("So you have an idea")
     print("Money: ${}".format((player.money)))
+    print(project)
 
     unlocked_entities = [entity for entity in entities if entity.unlocked and not entity.limit_reached()]
     limited_entities = [entity for entity in entities if entity.limit_reached()]
@@ -25,6 +26,13 @@ def multiple_choice(question, choices):
     for number, choice in enumerate(choices):
         print("{} {} a {}".format(number, choice.action_str, choice.message))
 
+    nothing_choice = number + 1
+    print("{} Do nothing.".format(nothing_choice))
+
     answer = int(input())
-    return choices[answer]
+
+    if answer == nothing_choice:
+        return None
+    else:
+        return choices[answer]
 

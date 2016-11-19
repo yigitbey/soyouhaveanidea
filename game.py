@@ -40,13 +40,23 @@ class Entity(object, metaclass=EntityMeta):
             else:
                 raise Entity.TooManyEntitiesException("No limit for {}".format(self.__class__.__name__))
 
-    def drain(self, **kwargs):
-        for key, value in kwargs.items():
-            self.inventory[key] += value
+    def trade(self, entity, item, value):
+        item1 = getattr(self, item)
+        item2 = getattr(entity, item)
+        item1 -= value
+        item2 += value
 
-    def replenish(self, **kwargs):
-        for key, value in kwargs.items():
+    def turn(self):
+        self.drain()
+        self.replenish()
+
+    def drain(self):
+        for key, value in self.draining.items():
             self.inventory[key] -= value
+
+    def replenish(self):
+        for key, value in self.replenishing.items():
+            self.inventory[key] += value
 
     @classmethod
     def unlocks(cls):
@@ -102,13 +112,27 @@ class Developer(Person):
     wage = 0
     action_str = "Hire"
 
+    introduces = {}
+    develops = {}
+
+    def turn(self):
+        super().turn()
+        for key, value in self.introduces.items():
+            project_key = getattr(project, key)
+            setattr(project, key, project_key + value)
+
+        for key, value in self.develops.items():
+            project_key = getattr(project, key)
+            setattr(project, key, project_key - value)
+
 
 class StudentDeveloper(Developer):
     limit = 3
     formatted = "Student Developer"
     wage = 0
 
-    replenishes = {"Bugs": 10}
+    introduces = {"bugs": 10}
+    develops = {"features": 5}
 
 
 class ShittyDeveloper(Developer):
@@ -127,9 +151,20 @@ class Project(Entity):
     limit = 1
     unlocked = True
     bugs = 0
+    features = 1000
+    technical_debt = 0
+    server_maintenance = 0
     action_str = "Start"
     formatted = "Project"
     unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+
+    def __repr__(self):
+        return "Remaining Features: {}, Bugs: {}, Technical Debt: {}, Server Costs: {}".format(
+            self.features,
+            self.bugs,
+            self.technical_debt,
+            self.server_maintenance
+        )
 
 
 class Boss(Person):
@@ -140,7 +175,18 @@ class Boss(Person):
     unlocks_entities = [Project]
 
 
+class UsedResources(object):
+    def __init__(self):
+        self.money = 0
+        self.turn_count = 0
+
+
 def init_game():
+    global used_resources
+    used_resources = UsedResources()
+    global project
+    project = Project()
+
     initial_player_inventory = {
         'money': 10000,
     }
@@ -156,15 +202,24 @@ def init_game():
     )
     global objects
     objects.append(player)
+    objects.append(project)
 
 objects = []
-entities = [Boss, Project, StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+used_resources = None
+project = None
+
+entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
 
 if __name__ == "__main__":
-
+    print("So you have an idea")
     init_game()
+
     while True:
 
         action = ui.cli(objects, entities)
-        objects.append(action())
+        if action:
+            objects.append(action())
+
+        for o in objects:
+            o.turn()
 
