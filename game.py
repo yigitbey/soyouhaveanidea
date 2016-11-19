@@ -1,109 +1,20 @@
 import ui
-
-
-class Resource(object):
-    def __init__(self):
-        pass
-
-
-class EntityMeta(type):
-    def __new__(cls, clsname, superclasses, attributedict):
-        clss = type.__new__(cls, clsname, superclasses, attributedict)
-        if 'cost' in attributedict:
-            clss.message = "{} (${} monthly)".format(attributedict['formatted'], attributedict['cost'])
-        else:
-            clss.message = "{}".format(attributedict['formatted'])
-        return clss
-
-
-class Entity(object, metaclass=EntityMeta):
-    current_amount = 0
-    limit = -1
-    unlocked = False
-    unlocks_entities = []
-    locks_entities = []
-    cost = 0
-    formatted = "Entity"
-    drains = {}
-    replenishes = {}
-
-    def __init__(self, inventory={}, draining=drains, replenishing=replenishes):
-
-        if self.__class__.limit >= 0:
-            if self.__class__.current_amount < self.__class__.limit:
-                self.inventory = inventory
-                self.draining = draining
-                self.replenishing = replenishing
-                self.__class__.current_amount += 1
-                self.__class__.unlocks()
-                self.__class__.locks()
-            else:
-                raise Entity.TooManyEntitiesException("No limit for {}".format(self.__class__.__name__))
-
-    def trade(self, entity, item, value):
-        item1 = getattr(self, item)
-        item2 = getattr(entity, item)
-        item1 -= value
-        item2 += value
-
-    def turn(self):
-        self.drain()
-        self.replenish()
-
-    def drain(self):
-        for key, value in self.draining.items():
-            self.inventory[key] -= value
-
-    def replenish(self):
-        for key, value in self.replenishing.items():
-            self.inventory[key] += value
-
-    @classmethod
-    def unlocks(cls):
-        for entity in cls.unlocks_entities:
-            entity.unlock()
-
-    @classmethod
-    def locks(cls):
-        for entity in cls.locks_entities:
-            entity.lock()
-
-    @classmethod
-    def unlock(cls):
-        cls.unlocked = True
-
-    @classmethod
-    def lock(cls):
-        cls.unlocked = False
-
-    @classmethod
-    def limit_reached(cls):
-        if cls.limit >= 0:
-            if cls.current_amount >= cls.limit:
-                return True
-
-        return False
-
-
-    class TooManyEntitiesException(Exception):
-        pass
+from entity import Entity
+from resource import Resource, UsedResources
 
 
 class Person(Entity):
     limit = -1
     cost = 0
     formatted = "Person"
+    drains_from = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    @property
-    def money(self):
-        return self.inventory['money']
-
-    @money.setter
-    def money(self, value):
-        self.inventory['money'] = value
+    def turn(self):
+        super().turn()
+        self.drains_from.trade(self, 'money', self.cost)
 
 
 class Developer(Person):
@@ -111,6 +22,7 @@ class Developer(Person):
     formatted = "Developer"
     cost = 0
     action_str = "Hire"
+    inventory = {'money': 0}
 
     introduces = {}
     develops = {}
@@ -118,16 +30,20 @@ class Developer(Person):
     def turn(self):
         super().turn()
         for key, value in self.introduces.items():
-            project_key = getattr(project, key)
-            setattr(project, key, project_key + value)
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
 
         for key, value in self.develops.items():
-            project_key = getattr(project, key)
-            setattr(project, key, project_key - value)
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key - value)
+
+    def __init__(self, project, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.drains_from = project
 
 
 class StudentDeveloper(Developer):
-    limit = 3
+    limit = -1
     formatted = "Student Developer"
     cost = 0
 
@@ -135,7 +51,10 @@ class StudentDeveloper(Developer):
         "bugs": 2,
         "technical_debt": 3,
     }
-    develops = {"features": 1}
+    develops = {
+        "features": 1,
+        "documentation": -1,
+    }
 
 
 class ShittyDeveloper(Developer):
@@ -143,29 +62,89 @@ class ShittyDeveloper(Developer):
     formatted = "Shitty Developer"
     cost = 5
 
+    introduces = {
+        "bugs": 1,
+        "technical_debt": 4,
+    }
+    develops = {"features": 2}
+
 
 class MediocreDeveloper(Developer):
     limit = -1
     formatted = "Mediocre Developer"
     cost = 10
 
+    introduces = {
+        "bugs": 1,
+        "technical_debt": 3,
+        "documentation": 1
+    }
+    develops = {
+        "features": 3,
+    }
+
+
+class SeniorDeveloper(Developer):
+    limit = -1
+    formatted = "Senior Developer"
+    cost = 20
+
+    introduces = {
+        "bugs": 1,
+        "technical_debt": 1,
+        "documentation": 6
+    }
+    develops = {
+        "features": 6,
+    }
+
+
+class GeniusDeveloper(Developer):
+    limit = 1
+    formatted = "Genius Developer"
+    cost = 100
+
+    introduces = {
+        "bugs": 1,
+        "technical_debt": 0,
+        "documentation": 10
+    }
+    develops = {
+        "features": 10,
+    }
+
 
 class Project(Entity):
+    name = "Project 1"
     limit = 1
     unlocked = True
     bugs = 0
     features = 1000
     technical_debt = 0
+    documentation = 0
     server_maintenance = 0
     action_str = "Start"
     formatted = "Project"
-    unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+    unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper]
+
+    introduces = {
+        'features': 2
+    }
+
+    def turn(self):
+        super().turn()
+        for key, value in self.introduces.items():
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
 
     def __repr__(self):
-        return "Remaining Features: {}, Bugs: {}, Technical Debt: {}, Server Costs: {}".format(
+        return "{}: Budget: ${}, Remaining Features: {}, Bugs: {}, Technical Debt: {}, Documentation: {}, Server Costs: {}".format(
+            self.name,
+            self.money,
             self.features,
             self.bugs,
             self.technical_debt,
+            self.documentation,
             self.server_maintenance
         )
 
@@ -173,56 +152,47 @@ class Project(Entity):
 class Boss(Person):
     limit = 1
     formatted = "Boss"
-    wage = 0
+    cost = 0
     unlocked = True
     unlocks_entities = [Project]
 
-
-class UsedResources(object):
-    def __init__(self):
-        self.money = 0
-        self.turn_count = 0
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.drains_from = self
 
 
-def init_game():
-    global used_resources
-    used_resources = UsedResources()
-    global project
-    project = Project()
+class Game(object):
 
-    initial_player_inventory = {
-        'money': 10000,
-    }
-    initial_player_drain = {
-        'money': 5
-    }
-    initial_player_replenish = {}
+    @classmethod
+    def init_game(cls):
+        cls.used_resources = UsedResources()
 
-    player = Boss(
-        inventory=initial_player_inventory,
-        draining=initial_player_drain,
-        replenishing=initial_player_replenish,
-    )
-    global objects
-    objects.append(player)
-    objects.append(project)
+        initial_player_inventory = {
+            'money': 10000,
+        }
+        initial_player_drain = {
+            'money': 5
+        }
+        initial_player_replenish = {}
 
-objects = []
-used_resources = None
-project = None
+        player = Boss(
+            inventory=initial_player_inventory,
+            draining=initial_player_drain,
+            replenishing=initial_player_replenish,
+        )
 
-entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+        project_name, budget = ui.initproject(player.inventory['money'])
 
-if __name__ == "__main__":
-    print("So you have an idea")
-    init_game()
+        cls.project = Project()
+        cls.project.name = project_name
+        player.trade(cls.project, 'money', budget)
 
-    while True:
+        cls.objects.append(player)
+        cls.objects.append(cls.project)
+        player.project = cls.project
 
-        action = ui.cli(objects, entities)
-        if action:
-            objects.append(action())
+    objects = []
+    used_resources = None
+    project = None
 
-        for o in objects:
-            o.turn()
-
+    entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper]
