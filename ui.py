@@ -23,7 +23,7 @@ def multiple_choice(question, choices):
     print(question)
 
     for number, choice in enumerate(choices):
-        print("{} Hire {}".format(number, choice.message))
+        print("{} {} a {}".format(number, choice.action_str, choice.message))
 
     answer = int(input())
     return choices[answer]

@@ -9,7 +9,10 @@ class Resource(object):
 class EntityMeta(type):
     def __new__(cls, clsname, superclasses, attributedict):
         clss = type.__new__(cls, clsname, superclasses, attributedict)
-        clss.message = "{} (${} monthly)".format(attributedict['formatted'], attributedict['wage'])
+        if 'wage' in attributedict:
+            clss.message = "{} (${} monthly)".format(attributedict['formatted'], attributedict['wage'])
+        else:
+            clss.message = "{}".format(attributedict['formatted'])
         return clss
 
 
@@ -21,15 +24,16 @@ class Entity(object, metaclass=EntityMeta):
     locks_entities = []
     wage = 0
     formatted = "Entity"
+    drains = {}
+    replenishes = {}
 
-    def __init__(self, unlocked=False, inventory={}, draining={}, replenishing={}):
+    def __init__(self, inventory={}, draining=drains, replenishing=replenishes):
 
         if self.__class__.limit >= 0:
             if self.__class__.current_amount < self.__class__.limit:
                 self.inventory = inventory
                 self.draining = draining
                 self.replenishing = replenishing
-                self.__class__.unlocked = unlocked
                 self.__class__.current_amount += 1
                 self.__class__.unlocks()
                 self.__class__.locks()
@@ -96,12 +100,15 @@ class Developer(Person):
     limit = -1
     formatted = "Developer"
     wage = 0
+    action_str = "Hire"
 
 
 class StudentDeveloper(Developer):
-    limit = -1
+    limit = 3
     formatted = "Student Developer"
     wage = 0
+
+    replenishes = {"Bugs": 10}
 
 
 class ShittyDeveloper(Developer):
@@ -116,11 +123,21 @@ class MediocreDeveloper(Developer):
     wage = 10
 
 
+class Project(Entity):
+    limit = 1
+    unlocked = True
+    bugs = 0
+    action_str = "Start"
+    formatted = "Project"
+    unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+
+
 class Boss(Person):
     limit = 1
     formatted = "Boss"
     wage = 0
-    unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+    unlocked = True
+    unlocks_entities = [Project]
 
 
 def init_game():
@@ -133,7 +150,6 @@ def init_game():
     initial_player_replenish = {}
 
     player = Boss(
-        unlocked=True,
         inventory=initial_player_inventory,
         draining=initial_player_drain,
         replenishing=initial_player_replenish,
@@ -142,7 +158,7 @@ def init_game():
     objects.append(player)
 
 objects = []
-entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
+entities = [Boss, Project, StudentDeveloper, ShittyDeveloper, MediocreDeveloper]
 
 if __name__ == "__main__":
 
@@ -150,5 +166,5 @@ if __name__ == "__main__":
     while True:
 
         action = ui.cli(objects, entities)
-        objects.append(action)
+        objects.append(action())
 
