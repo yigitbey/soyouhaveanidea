@@ -7,8 +7,9 @@ if __name__ == "__main__":
 
     Game.init_game()
     over = False
+    win = False
 
-    while not over:
+    while not (over or win):
 
         action = ui.cli(Game.objects, Game.entities, Game.used_resources)
         if action:
@@ -20,11 +21,22 @@ if __name__ == "__main__":
                 o.turn()
             except NotEnoughFundsException:
                 over = True
+            except WinException:
+                win = True
 
         Game.used_resources.turn_count += 1
 
-    print("XXXXXXXXX")
-    print("GAME OVER")
-    print("XXXXXXXXX")
-    print(Game.project)
-    print("Score: {}".format(Game.project.score))
+    print(chr(27) + "[2J")
+    if over:
+        print("---------")
+        print("GAME OVER")
+        print("---------")
+        print(Game.project)
+        print("Score: {}".format(Game.project.score))
+
+    if win:
+        print("---------")
+        print("YOU WON")
+        print("---------")
+        print(Game.project)
+        print("Score: {}".format(Game.project.score))

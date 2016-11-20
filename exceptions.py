@@ -4,3 +4,7 @@ class NotEnoughFundsException(Exception):
 
 class TooManyEntitiesException(Exception):
     pass
+
+
+class WinException(Exception):
+    pass

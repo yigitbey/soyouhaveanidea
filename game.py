@@ -3,6 +3,28 @@ from entity import Entity
 from resource import Resource, UsedResources
 from exceptions import *
 
+
+class Event(Entity):
+    productivity_modifier = 0
+    initial_cost = 0
+    formatted = "Event"
+    action_str = "Organize"
+    drains = {}
+
+    def __init__(self, project,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        project.productivity += self.productivity_modifier / 100
+        project.money -= self.initial_cost
+
+
+class TeamEvent(Event):
+    productivity_modifier = 10
+    initial_cost = 1000
+    formatted = "Team Event (Productivity: +{}, Initial Cost: {})".format(productivity_modifier, initial_cost)
+
+    unlocked = False
+
+
 class Person(Entity):
     limit = -1
     cost = 0
@@ -53,6 +75,44 @@ class Developer(ProjectEmployee):
         self.introduces['server_maintenance'] = self.develops['features'] / 10
 
 
+class CoffeeMachine(Entity):
+    limit = -1
+    formatted = "Coffee Machine ☕"
+    action_str = "Buy"
+    initial_cost = 0
+    productivity_modifier = 0
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Game.project.money -= self.initial_cost
+        Game.project.productivity += self.productivity_modifier / 100
+
+
+class ShittyCoffeeMachine(CoffeeMachine):
+    limit = 1
+    cost = 2
+    initial_cost = 10
+    productivity_modifier = 2
+
+    formatted = u"Shitty Coffee Machine ☕(Productivity: +{}, Initial Cost: {})".format(productivity_modifier, initial_cost)
+
+
+class GoodCoffeeMachine(CoffeeMachine):
+    limit = 1
+    formatted = "Good Coffee Machine ☕"
+    cost = 4
+    initial_cost = 25
+    productivity_modifier = 5
+
+
+class ArtisanCoffeeMachine(CoffeeMachine):
+    limit = 1
+    formatted = "Artisan Coffee Machine ☕"
+    cost = 10
+    initial_cost = 100
+    productivity_modifier = 10
+
+
 class Designer(ProjectEmployee):
     limit = -1
     formatted = "Designer"
@@ -79,9 +139,11 @@ class StudentDesigner(Designer):
 
 
 class ShittyDesigner(Designer):
-    formatted = "Shitty Designer"
+    formatted = "Shitty Designer 💩"
     cost = 5
     drops = {'design_need': 6}
+
+    unlocks_entities = [ShittyCoffeeMachine]
 
 
 class MediocreDesigner(Designer):
@@ -89,11 +151,15 @@ class MediocreDesigner(Designer):
     cost = 10
     drops = {'design_need': 8}
 
+    unlocks_entities = [GoodCoffeeMachine]
+
 
 class SeniorDesigner(Designer):
     formatted = "Senior Designer"
     cost = 20
     drops = {'design_need': 12}
+
+    unlocks_entities = [ArtisanCoffeeMachine]
 
 
 class ProjectManager(ProjectEmployee):
@@ -107,7 +173,7 @@ class ProjectManager(ProjectEmployee):
     drops = {
         "features": 15
     }
-    unlocks_entities = [Designer, ShittyDesigner, MediocreDesigner, SeniorDesigner]
+    unlocks_entities = [Designer, ShittyDesigner, MediocreDesigner, SeniorDesigner, TeamEvent]
 
     def turn(self):
         super().turn()
@@ -121,7 +187,7 @@ class ProjectManager(ProjectEmployee):
 
 class StudentDeveloper(Developer):
     limit = -1
-    formatted = "Student Developer"
+    formatted = "Student Developer 👦"
     cost = 0
     productivity_drop = 0.2
 
@@ -137,7 +203,7 @@ class StudentDeveloper(Developer):
 
 class ShittyDeveloper(Developer):
     limit = -1
-    formatted = "Shitty Developer"
+    formatted = u"Shitty Developer 💩"
     cost = 5
     productivity_drop = 0.15
 
@@ -150,7 +216,7 @@ class ShittyDeveloper(Developer):
 
 class MediocreDeveloper(Developer):
     limit = -1
-    formatted = "Mediocre Developer"
+    formatted = "Mediocre Developer 👱"
     cost = 10
     productivity_drop = 0.10
 
@@ -166,7 +232,7 @@ class MediocreDeveloper(Developer):
 
 class SeniorDeveloper(Developer):
     limit = -1
-    formatted = "Senior Developer"
+    formatted = "Senior Developer 👴"
     cost = 20
     productivity_drop = 0.05
 
@@ -182,7 +248,7 @@ class SeniorDeveloper(Developer):
 
 class GeniusDeveloper(Developer):
     limit = 1
-    formatted = "Genius Developer"
+    formatted = "Genius Developer 🕵"
     cost = 100
     productivity_drop = 0
 
@@ -233,6 +299,10 @@ class Project(Entity):
 
         if Game.project.money <= 0:
             raise NotEnoughFundsException
+
+        if Game.project.features <= 0:
+            raise WinException
+
 
     def __repr__(self):
         return "{}: Budget: ${}, Productivity: %{}, Remaining Features: {}, Bugs: {}, Technical Debt: {}, Documentation: {}, Server Costs: ${} Design Need: {}".format(
@@ -301,5 +371,6 @@ class Game(object):
     project = None
 
     entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
-                MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager
+                MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
+                ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent
                 ]
