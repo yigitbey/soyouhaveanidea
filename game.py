@@ -4,6 +4,17 @@ from resource import Resource, UsedResources
 from exceptions import *
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class Event(Entity):
     productivity_modifier = 0
     initial_cost = 0
@@ -305,7 +316,15 @@ class Project(Entity):
 
 
     def __repr__(self):
-        return "{}: Budget: ${}, Productivity: %{}, Remaining Features: {}, Bugs: {}, Technical Debt: {}, Documentation: {}, Server Costs: ${} Design Need: {}".format(
+        return (bcolors.FAIL + "{}" + bcolors.ENDC +
+                ": Budget: " + bcolors.OKGREEN + "${}" + bcolors.ENDC +
+                ", Productivity:" + bcolors.OKGREEN + "%{}" + bcolors.ENDC +
+                ", Remaining Features:" + bcolors.OKGREEN + "{}" + bcolors.ENDC +
+                ", Bugs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC +
+                ", Technical Debt: " + bcolors.OKGREEN + "{}" + bcolors.ENDC +
+                ", Documentation: " + bcolors.OKGREEN + "{}" + bcolors.ENDC +
+                ", Server Costs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC +
+                ", Design Need: " + bcolors.OKGREEN + "{}" + bcolors.ENDC ).format(
             self.name,
             self.money,
             int(self.productivity*100),

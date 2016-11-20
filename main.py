@@ -3,7 +3,7 @@ from exceptions import *
 import ui
 
 if __name__ == "__main__":
-    print("So you have an idea")
+
 
     Game.init_game()
     over = False

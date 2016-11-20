@@ -1,5 +1,6 @@
 def initproject(all_budget):
     print(chr(27) + "[2J")
+    print("So you have an idea")
     print("What's the name of the project?")
     name = input()
 
