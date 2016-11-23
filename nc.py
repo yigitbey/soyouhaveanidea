@@ -26,18 +26,22 @@ def init_ui():
     bottom_win.refresh()
 
     bottom_win.move(1,1)
-    bottom_win.getkey()
+    bottom_win.getstr()
     #win.refresh()
 
+    return (left_win, middle_win, right_win, bottom_win)
+
+
 def main(stdscr):
-    # Clear screen
-    #resize_term(40,120)
+
     stdscr.clear()
     curses.start_color()
 
-    init_ui()
+
 
     stdscr.refresh()
 
+def printw(window, text):
+    window.addstr(text)
 
 wrapper(main)

@@ -1,6 +1,6 @@
 from game import Game
 from exceptions import *
-import ui
+import ui_nc as ui
 
 def start_game():
     Game.init_game()
@@ -24,20 +24,11 @@ def start_game():
 
         Game.used_resources.turn_count += 1
 
-    print(chr(27) + "[2J")
     if over:
-        print("---------")
-        print("GAME OVER")
-        print("---------")
-        print(Game.project)
-        print("Score: {}".format(Game.project.score))
+        ui.over(Game.project)
 
     if win:
-        print("---------")
-        print("YOU WON")
-        print("---------")
-        print(Game.project)
-        print("Score: {}".format(Game.project.score))
+        ui.win(Game.project)
 
 if __name__ == "__main__":
     start_game()

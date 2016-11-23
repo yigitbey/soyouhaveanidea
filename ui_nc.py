@@ -1,7 +1,11 @@
+from nc import init_ui, printw
+
 def initproject(all_budget):
-    print(chr(27) + "[2J")
-    print("So you have an idea")
-    print("What's the name of the project?")
+    windows = init_ui()
+    printw(windows[1], "So you have an idea")
+    printw(windows[1], "What's the name of the project?")
+    for w in windows:
+        w.refresh()
     name = input()
 
     budget = all_budget + 1
