@@ -1,0 +1,3 @@
+#!/bin/bash
+resize -s 42 122
+python3 nc.py 
