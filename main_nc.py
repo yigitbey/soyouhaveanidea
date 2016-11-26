@@ -2,6 +2,7 @@ from game import Game
 from exceptions import *
 import ui_nc as ui
 
+
 def start_game():
     Game.init_game()
     over = False

@@ -1,4 +1,4 @@
-import ui
+import ui_nc as ui
 from entity import Entity
 from resource import Resource, UsedResources
 from exceptions import *
@@ -314,16 +314,15 @@ class Project(Entity):
         if Game.project.features <= 0:
             raise WinException
 
-
     def __repr__(self):
-        return (bcolors.FAIL + "{}" + bcolors.ENDC +
-                ": Budget: " + bcolors.OKGREEN + "${}" + bcolors.ENDC +
-                ", Productivity:" + bcolors.OKGREEN + "%{}" + bcolors.ENDC +
-                ", Remaining Features:" + bcolors.OKGREEN + "{}" + bcolors.ENDC +
-                ", Bugs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC +
-                ", Technical Debt: " + bcolors.OKGREEN + "{}" + bcolors.ENDC +
-                ", Documentation: " + bcolors.OKGREEN + "{}" + bcolors.ENDC +
-                ", Server Costs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC +
+        return (bcolors.FAIL + "{}" + bcolors.ENDC + "\n" +
+                ": Budget: " + bcolors.OKGREEN + "${}" + bcolors.ENDC + "\n" +
+                ", Productivity:" + bcolors.OKGREEN + "%{}" + bcolors.ENDC + "\n" +
+                ", Remaining Features:" + bcolors.OKGREEN + "{}" + bcolors.ENDC + "\n" +
+                ", Bugs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC + "\n" +
+                ", Technical Debt: " + bcolors.OKGREEN + "{}" + bcolors.ENDC + "\n" +
+                ", Documentation: " + bcolors.OKGREEN + "{}" + bcolors.ENDC + "\n" +
+                ", Server Costs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC + "\n" +
                 ", Design Need: " + bcolors.OKGREEN + "{}" + bcolors.ENDC ).format(
             self.name,
             self.money,
