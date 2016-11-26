@@ -1,4 +1,3 @@
 #!/bin/bash
-printf '\e[8;52;122t'
-printf '\e[9;1t'
+printf '\e[8;52;126t'
 python3 main_nc.py 
