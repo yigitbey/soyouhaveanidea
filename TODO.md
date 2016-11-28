@@ -1,0 +1,10 @@
+- [ ] Firing people
+- [ ] Random event for productivity
+- [ ] Release
+- [ ] Customers
+- [ ] Customer support
+- [ ] COO
+- [ ] Investors
+- [ ] Company Stock
+- [ ] Beurocracy
+- [ ] Balance
