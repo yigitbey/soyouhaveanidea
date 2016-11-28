@@ -1,4 +1,5 @@
 from functools import partial
+import logging
 
 from nc import init_ui, printw, getstr, clear, alert
 from menu import Menu
@@ -9,6 +10,7 @@ print1 = partial(printw, windows[1])
 print2 = partial(printw, windows[2])
 print3 = partial(printw, windows[3])
 read = partial(getstr, windows[3])
+
 
 def initproject(all_budget):
     print1("So you have an idea")
@@ -22,7 +24,7 @@ def initproject(all_budget):
 
     while budget > all_budget:
         print1("You have $10000.")
-        print1("Your daily personal expense is $5.")
+        print1("Your daily personal expense is $25.")
         print1("How much budget do you want to allocate to your project?")
         budget = int(read())
 
@@ -64,15 +66,18 @@ def cli(objects, entities, used_resources, turn_events):
     player = objects[0]
     project = objects[1]
 
+    logger = logging.getLogger('soyu')
+    logger.debug(turn_events)
     for event in turn_events:
         a, b = alert(windows[4], str(event))
         del a
         del b
+    project.turn_events = []
 
     clear(windows[1])
 
     print1("Day {}".format(used_resources.turn_count))
-    print1("Your Wallet: ${}".format(player.money))
+    print1("Your Wallet: ${} Your shares: %{}".format(player.money, player.shares))
     print_project(project)
 
     unlocked_entities = [entity for entity in entities if entity.unlocked and not entity.limit_reached()]

@@ -27,6 +27,7 @@ class Entity(object, metaclass=EntityMeta):
     increases = {}
     decreases = {}
     productivity_modifier = 0
+    detail_fields = []
 
     def __init__(self, project=None, inventory=inventory, draining=drains, replenishing=replenishes):
 
@@ -54,6 +55,7 @@ class Entity(object, metaclass=EntityMeta):
     def turn(self):
         self.drain()
         self.replenish()
+
 
     def drain(self):
         for key, value in self.draining.items():

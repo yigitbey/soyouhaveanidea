@@ -1,4 +1,4 @@
-from game import Game
+from game import Game, Project
 from exceptions import *
 import ui
 
@@ -16,12 +16,22 @@ def start_game():
             Game.objects.append(o)
 
         for o in Game.objects:
+            if isinstance(o, Project):
+                continue
             try:
                 o.turn()
             except NotEnoughFundsException:
                 over = True
             except WinException:
                 win = True
+
+        try:
+            Game.project.turn()
+        except NotEnoughFundsException:
+            over = True
+        except WinException:
+            win = True
+
 
         Game.used_resources.turn_count += 1
 

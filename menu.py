@@ -35,6 +35,10 @@ class EntityDetail(object):
                 if value != 0:
                     self.iwindow.addstr("   {}: {}\n".format(key, value))
 
+        for field in entity.detail_fields:
+            value = getattr(entity, field[0])
+            self.iwindow.addstr(field[1].format(value)+"\n")
+
         self.iwindow.refresh()
 
     def delete(self):

@@ -11,16 +11,6 @@ hdlr = logging.FileHandler('/tmp/soyu.log')
 logger.addHandler(hdlr)
 logger.setLevel(logging.DEBUG)
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
 
 class Event(Entity):
     productivity_modifier = 0
@@ -54,15 +44,21 @@ class Resignment(object):
         return self.message
 
 
+class AlertEvent(object):
+    def __init__(self, message):
+        self.message = message
+
+    def __repr__(self):
+        return self.message
+
+
 class Person(Entity):
     limit = -1
     cost = 0
     formatted = "Person"
     action_str = "Hire"
+    shares = 0
     drains_from = None
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     def turn(self):
         super().turn()
@@ -278,11 +274,11 @@ class SeniorDeveloper(Developer):
 
     increases = {
         "bugs": 1,
-        "technical_debt": 1,
         "documentation": 6
     }
     decreases = {
         "features": 6,
+        "technical_debt": 1
     }
     resign_prob = 0.01
 
@@ -295,11 +291,11 @@ class GeniusDeveloper(Developer):
 
     increases = {
         "bugs": 1,
-        "technical_debt": 0,
         "documentation": 10
     }
     decreases = {
         "features": 10,
+        "technical_debt": 5,
     }
 
     resign_prob = 0.1
@@ -342,35 +338,76 @@ class Project(Entity):
         if Game.project.features/Game.project.initial_features <= 0.9:
             ProjectManager.unlock()
 
+        if Game.project.features/Game.project.initial_features <= 0.8:
+            COO.unlock()
+
         if Game.project.money <= 0:
             raise NotEnoughFundsException
 
         if Game.project.features <= 0:
             raise WinException
 
-        self.turn_events = []
+       # self.turn_events = []
 
     def __repr__(self):
-        return (bcolors.FAIL + "{}" + bcolors.ENDC + "\n" +
-                ": Budget: " + bcolors.OKGREEN + "${}" + bcolors.ENDC + "\n" +
-                ", Productivity:" + bcolors.OKGREEN + "%{}" + bcolors.ENDC + "\n" +
-                ", Remaining Features:" + bcolors.OKGREEN + "{}" + bcolors.ENDC + "\n" +
-                ", Bugs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC + "\n" +
-                ", Technical Debt: " + bcolors.OKGREEN + "{}" + bcolors.ENDC + "\n" +
-                ", Documentation: " + bcolors.OKGREEN + "{}" + bcolors.ENDC + "\n" +
-                ", Server Costs: " + bcolors.OKGREEN + "${}" + bcolors.ENDC + "\n" +
-                ", Design Need: " + bcolors.OKGREEN + "{}" + bcolors.ENDC ).format(
-            self.name,
-            self.money,
-            int(self.productivity*100),
-            int(self.features),
-            self.bugs,
-            self.technical_debt,
-            self.documentation,
-            int(self.server_maintenance),
-            int(self.design_need),
-        )
+        return self.name
 
+
+class Investor(Entity):
+    shares = 0
+    limit = 1
+    money = 0
+    formatted = "Investor"
+    action_str = "Get investment from"
+    detail_fields = [('shares', "Will get {} shares"), ('money', 'Will bring ${}')]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Game.project.money += self.money
+        self.money = 0
+        Game.objects[0].shares -= self.shares
+
+    def turn(self):
+        super().turn()
+        for key, value in self.increases.items():
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
+
+
+class SmallInvestor(Investor):
+    limit = 5
+    shares = 2
+    money = 1000
+    formatted = "Small Investor"
+
+    increases = {'features': 2,
+                 'design_need': 3}
+
+
+class BigInvestor(Investor):
+    limit = 2
+    shares = 40
+    money = 20000
+    formatted = "Big Investor"
+
+    increases = {'features': 30,
+                 'design_need': 40}
+
+
+class COO(ProjectEmployee):
+    cost = 25
+    unlocks_entities = [SmallInvestor, BigInvestor]
+    formatted = "COO"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Game.objects[0].cost = 26
+        try:
+            logger.debug(Game.project.turn_events)
+            Game.project.turn_events.append(AlertEvent("Your COO decided to pay the CEO(you) $30 each month."))
+            logger.debug(Game.project.turn_events)
+        except Exception as e:
+            logger.log(e)
 
 class Boss(Person):
     limit = 1
@@ -398,7 +435,8 @@ class Game(object):
 
     entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
                 MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
-                ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent
+                ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent,
+                COO, SmallInvestor, BigInvestor
                 ]
 
     @classmethod
@@ -409,7 +447,7 @@ class Game(object):
             'money': 10000,
         }
         initial_player_drain = {
-            'money': 5
+            'money': 25
         }
         initial_player_replenish = {}
 
@@ -419,6 +457,7 @@ class Game(object):
             replenishing=initial_player_replenish,
         )
 
+        Boss.shares = 100
         project_name, budget = ui.initproject(player.inventory['money'])
 
         cls.project = Project()
