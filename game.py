@@ -1,8 +1,15 @@
+import random
+
 import ui_nc as ui
 from entity import Entity
 from resource import Resource, UsedResources
 from exceptions import *
 
+import logging
+logger = logging.getLogger('soyu')
+hdlr = logging.FileHandler('/tmp/soyu.log')
+logger.addHandler(hdlr)
+logger.setLevel(logging.DEBUG)
 
 class bcolors:
     HEADER = '\033[95m'
@@ -36,6 +43,17 @@ class TeamEvent(Event):
     unlocked = False
 
 
+class Resignment(object):
+    def __init__(self, person, cause):
+        logger.error("A")
+        self.person = person
+        self.cause = cause
+        self.message = "{} has resigned because of {}".format(person, cause)
+
+    def __repr__(self):
+        return self.message
+
+
 class Person(Entity):
     limit = -1
     cost = 0
@@ -49,6 +67,10 @@ class Person(Entity):
     def turn(self):
         super().turn()
         self.drains_from.trade(self, 'money', self.cost)
+
+    def resign(self, cause):
+        Game.objects.remove(self)
+        Game.project.turn_events.append(Resignment(self, cause))
 
 
 class ProjectEmployee(Person):
@@ -68,6 +90,7 @@ class Developer(ProjectEmployee):
     productivity_drop = 0
     introduces = {}
     develops = {}
+    resign_prob = 0
 
     def turn(self):
         super().turn()
@@ -79,6 +102,11 @@ class Developer(ProjectEmployee):
             value *= Game.project.productivity
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key - value)
+
+        threshold = self.resign_prob*Game.project.technical_debt/100*Game.project.bugs/1000
+        logger.debug(threshold)
+        if random.random() < threshold:
+            self.resign("bugs and technical debt")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -255,6 +283,7 @@ class SeniorDeveloper(Developer):
     develops = {
         "features": 6,
     }
+    resign_prob = 0.01
 
 
 class GeniusDeveloper(Developer):
@@ -271,6 +300,8 @@ class GeniusDeveloper(Developer):
     develops = {
         "features": 10,
     }
+
+    resign_prob = 0.1
 
 
 class Project(Entity):
@@ -294,6 +325,8 @@ class Project(Entity):
         'design_need': 5
     }
 
+    turn_events = []
+
     @property
     def score(self):
         score = ((self.features * -1 / 2) - self.bugs - self.technical_debt + self.documentation * 3 - self.server_maintenance - self.design_need + self.money) * self.productivity
@@ -313,6 +346,8 @@ class Project(Entity):
 
         if Game.project.features <= 0:
             raise WinException
+
+        self.turn_events = []
 
     def __repr__(self):
         return (bcolors.FAIL + "{}" + bcolors.ENDC + "\n" +
@@ -356,6 +391,15 @@ class Boss(Person):
 
 class Game(object):
 
+    objects = []
+    used_resources = None
+    project = None
+
+    entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
+                MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
+                ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent
+                ]
+
     @classmethod
     def init_game(cls):
         cls.used_resources = UsedResources()
@@ -384,11 +428,5 @@ class Game(object):
         cls.objects.append(cls.project)
         player.project = cls.project
 
-    objects = []
-    used_resources = None
-    project = None
+        logger.error("BBB")
 
-    entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
-                MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
-                ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent
-                ]

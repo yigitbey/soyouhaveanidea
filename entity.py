@@ -38,6 +38,9 @@ class Entity(object, metaclass=EntityMeta):
         self.__class__.unlocks()
         self.__class__.locks()
 
+    def __repr__(self):
+        return self.__class__.__name__
+
     def trade(self, to_entity, item, value):
         item1 = getattr(self, item)
         item2 = getattr(to_entity, item)
