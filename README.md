@@ -1,3 +1,5 @@
+You need Python3.
+
 Start with `./run`
 
 If your terminal does not support resizing with xterm Control Sequences (like iterm), then you need to manually resize your terminal.
