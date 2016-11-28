@@ -1,6 +1,7 @@
 from functools import partial
 
 from nc import init_ui, printw, getstr, clear, alert
+from menu import Menu
 
 windows = init_ui()
 print0 = partial(printw, windows[0])
@@ -8,7 +9,6 @@ print1 = partial(printw, windows[1])
 print2 = partial(printw, windows[2])
 print3 = partial(printw, windows[3])
 read = partial(getstr, windows[3])
-
 
 def initproject(all_budget):
     print1("So you have an idea")
@@ -79,7 +79,8 @@ def cli(objects, entities, used_resources, turn_events):
     limited_entities = [entity for entity in entities if entity.limit_reached()]
 
     print_limited(objects)
-    action = multiple_choice("What do you do?", unlocked_entities)
+    action = select("What do you do?", unlocked_entities)
+
     if not action:
         return None
     return action
@@ -93,19 +94,13 @@ def print_limited(entities):
         print2("{}x {}".format(entity.current_amount, entity.message))
 
 
-def multiple_choice(question, choices):
+def select(question, choices):
     print1(question)
-
-    for number, choice in enumerate(choices):
-        print1("{} {} a {}".format(number, choice.action_str, choice.message))
-
-    print1("Enter: Do nothing.")
-
-    answer = read(empty_ok=True)
-
+    answer_menu = Menu(choices, windows[1])
+    answer = answer_menu.display()
     try:
         answer = int(answer)
-    except ValueError:
+    except (ValueError, TypeError):
         answer = False
 
     if not answer:
@@ -116,13 +111,13 @@ def multiple_choice(question, choices):
         else:
             return None
 
-
 def win(project):
     clear(windows[1])
     print1("---------")
     print1("YOU WON")
     print1("---------")
     print1("Score: {}".format(project.score))
+    windows[1].getch()
 
 
 def over(project):
@@ -131,3 +126,4 @@ def over(project):
     print1("GAME OVER")
     print1("---------")
     print1("Score: {}".format(project.score))
+    windows[1].getch()

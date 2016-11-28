@@ -1,6 +1,6 @@
 import os
 import struct
-from curses import wrapper, newwin, resize_term
+from curses import wrapper, newwin, resize_term, beep, flash
 import curses
 from time import sleep
 
@@ -102,6 +102,8 @@ def alert(window, text):
 
     alert.addstr(text)
     alert.refresh()
+    beep()
+    flash()
     alert.getch()
     #getstr(alert, empty_ok=True)
     alert.erase()
