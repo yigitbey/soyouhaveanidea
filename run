@@ -3,4 +3,4 @@ printf '\e[8;42;162t'
 echo -n -e "\033]0;SoYouHaveAnIdea\007"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
-python3 main_nc.py
+python3 main.py

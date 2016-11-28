@@ -1,6 +1,6 @@
 import random
 
-import ui_nc as ui
+import ui
 from entity import Entity
 from resource import Resource, UsedResources
 from exceptions import *

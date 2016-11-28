@@ -1,6 +1,6 @@
 from game import Game
 from exceptions import *
-import ui_nc as ui
+import ui
 
 
 def start_game():
