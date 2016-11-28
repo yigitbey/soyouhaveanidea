@@ -88,17 +88,17 @@ class Developer(ProjectEmployee):
     action_str = "Hire"
     inventory = {'money': 0}
     productivity_drop = 0
-    introduces = {}
-    develops = {}
+    increases = {}
+    decreases = {}
     resign_prob = 0
 
     def turn(self):
         super().turn()
-        for key, value in self.introduces.items():
+        for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
 
-        for key, value in self.develops.items():
+        for key, value in self.decreases.items():
             value *= Game.project.productivity
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key - value)
@@ -111,7 +111,7 @@ class Developer(ProjectEmployee):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         Game.project.productivity *= (1 - self.productivity_drop)
-        self.introduces['server_maintenance'] = self.develops['features'] / 10
+        self.increases['server_maintenance'] = self.decreases['features'] / 10
 
 
 class CoffeeMachine(Entity):
@@ -160,12 +160,12 @@ class Designer(ProjectEmployee):
     action_str = "Hire"
     inventory = {'money': 0}
 
-    introduces = {}
-    drops = {}
+    increases = {}
+    decreases = {}
 
     def turn(self):
         super().turn()
-        for key, value in self.drops.items():
+        for key, value in self.decreases.items():
             value *= Game.project.productivity
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key - value)
@@ -174,13 +174,13 @@ class Designer(ProjectEmployee):
 class StudentDesigner(Designer):
     formatted = "Student Designer"
     cost = 0
-    drops = {'design_need': 4}
+    decreases = {'design_need': 4}
 
 
 class ShittyDesigner(Designer):
     formatted = "Shitty Designer 💩"
     cost = 5
-    drops = {'design_need': 6}
+    decreases = {'design_need': 6}
 
     unlocks_entities = [ShittyCoffeeMachine]
 
@@ -188,7 +188,7 @@ class ShittyDesigner(Designer):
 class MediocreDesigner(Designer):
     formatted = "Mediocre Designer"
     cost = 10
-    drops = {'design_need': 8}
+    decreases = {'design_need': 8}
 
     unlocks_entities = [GoodCoffeeMachine]
 
@@ -196,7 +196,7 @@ class MediocreDesigner(Designer):
 class SeniorDesigner(Designer):
     formatted = "Senior Designer"
     cost = 20
-    drops = {'design_need': 12}
+    decreases = {'design_need': 12}
 
     unlocks_entities = [ArtisanCoffeeMachine]
 
@@ -206,20 +206,20 @@ class ProjectManager(ProjectEmployee):
     formatted = "Project Manager"
     cost = 10
 
-    introduces = {
+    increases = {
         'design_need': 5
     }
-    drops = {
+    decreases = {
         "features": 15
     }
     unlocks_entities = [Designer, ShittyDesigner, MediocreDesigner, SeniorDesigner, TeamEvent]
 
     def turn(self):
         super().turn()
-        for key, value in self.introduces.items():
+        for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
-        for key, value in self.drops.items():
+        for key, value in self.decreases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key - value)
 
@@ -230,11 +230,11 @@ class StudentDeveloper(Developer):
     cost = 0
     productivity_drop = 0.2
 
-    introduces = {
+    increases = {
         "bugs": 2,
         "technical_debt": 3,
     }
-    develops = {
+    decreases = {
         "features": 1,
         "documentation": -1,
     }
@@ -246,11 +246,11 @@ class ShittyDeveloper(Developer):
     cost = 5
     productivity_drop = 0.15
 
-    introduces = {
+    increases = {
         "bugs": 1,
         "technical_debt": 4,
     }
-    develops = {"features": 2}
+    decreases = {"features": 2}
 
 
 class MediocreDeveloper(Developer):
@@ -259,12 +259,12 @@ class MediocreDeveloper(Developer):
     cost = 10
     productivity_drop = 0.10
 
-    introduces = {
+    increases = {
         "bugs": 1,
         "technical_debt": 3,
         "documentation": 1
     }
-    develops = {
+    decreases = {
         "features": 3,
     }
 
@@ -275,12 +275,12 @@ class SeniorDeveloper(Developer):
     cost = 20
     productivity_drop = 0.05
 
-    introduces = {
+    increases = {
         "bugs": 1,
         "technical_debt": 1,
         "documentation": 6
     }
-    develops = {
+    decreases = {
         "features": 6,
     }
     resign_prob = 0.01
@@ -292,12 +292,12 @@ class GeniusDeveloper(Developer):
     cost = 100
     productivity_drop = 0
 
-    introduces = {
+    increases = {
         "bugs": 1,
         "technical_debt": 0,
         "documentation": 10
     }
-    develops = {
+    decreases = {
         "features": 10,
     }
 
@@ -320,7 +320,7 @@ class Project(Entity):
     formatted = "Project"
     unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper]
 
-    introduces = {
+    increases = {
         'features': 5,
         'design_need': 5
     }
@@ -334,7 +334,7 @@ class Project(Entity):
 
     def turn(self):
         super().turn()
-        for key, value in self.introduces.items():
+        for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
 
@@ -429,4 +429,3 @@ class Game(object):
         player.project = cls.project
 
         logger.error("BBB")
-
