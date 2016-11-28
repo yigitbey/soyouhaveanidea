@@ -10,7 +10,7 @@ def start_game():
 
     while not (over or win):
 
-        action = ui.cli(Game.objects, Game.entities, Game.used_resources)
+        action = ui.cli(Game.objects, Game.entities, Game.used_resources, Game.project.turn_events)
         if action:
             o = action(Game.project)
             Game.objects.append(o)
@@ -33,3 +33,4 @@ def start_game():
 
 if __name__ == "__main__":
     start_game()
+

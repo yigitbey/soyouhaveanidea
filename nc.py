@@ -1,5 +1,4 @@
 import os
-import signal
 import struct
 from curses import wrapper, newwin, resize_term
 import curses
@@ -9,6 +8,7 @@ import fcntl
 
 import termios
 import sys
+
 
 def get_term_size():
     # taken from http://dag.wieers.com/home-made/dstat/
@@ -27,9 +27,9 @@ def get_term_size():
 
 def check_size():
     h, w = get_term_size()
-    while h < 50 or w < 125:
+    while h < 40 or w < 162:
         print(chr(27) + "[2J")
-        print("Resize the window until 50x125")
+        print("Resize the window until 50x162")
         h, w = get_term_size()
         print("Current window size: {}x{}".format(h,w))
 
@@ -40,10 +40,10 @@ def init_ui():
     check_size()
     begin_x = 1
     begin_y = 1
-    height = 50
-    width = 120
+    height = 40
+    width = 160
     left_win_width = 28
-    middle_win_width = 60
+    middle_win_width = 80
     right_win_width = width - left_win_width - middle_win_width - 4
 
     win = newwin(height, width, begin_y, begin_x)
@@ -66,7 +66,7 @@ def init_ui():
     right_win.refresh()
     right_win = right_win.derwin(height-7, right_win_width-2, 1, 1)
 
-    bottom_win = win.subwin(3, 116, 47, 2)
+    bottom_win = win.subwin(3, width-4, height-3, 2)
     bottom_win.border(0, 0, 0, 0, 0, 0, 0, 0)
     bottom_win.refresh()
     bottom_win = bottom_win.derwin(1, 114, 1, 1)
@@ -82,8 +82,7 @@ def init_ui():
     curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
 
-
-    return left_win, middle_win, right_win, bottom_win
+    return left_win, middle_win, right_win, bottom_win, win
 
 
 def printw(window, text, end="\n", color=0):
@@ -93,7 +92,26 @@ def printw(window, text, end="\n", color=0):
     window.refresh()
 
 
+def alert(window, text):
+    y, x = window.getmaxyx()
+    w, h = 50, 6
+    alertb = window.subwin(h, w, int(y/2-h/2), int(x/2-w/2))
+    alertb.border(0,0,0,0,0,0,0,0)
+    alertb.refresh()
+    alert = alertb.derwin(h-2, w-2, 1, 1)
+
+    alert.addstr(text)
+    alert.refresh()
+    alert.getch()
+    #getstr(alert, empty_ok=True)
+    alert.erase()
+    alertb.erase()
+
+    return alert, alertb
+
+
 def getstr(window, empty_ok=False):
+    window.clear()
     window.move(0, 0)
     if empty_ok:
         response = window.getstr()

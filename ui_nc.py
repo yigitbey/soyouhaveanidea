@@ -1,8 +1,6 @@
 from functools import partial
 
-from nc import init_ui, printw, getstr, clear
-
-import curses
+from nc import init_ui, printw, getstr, clear, alert
 
 windows = init_ui()
 print0 = partial(printw, windows[0])
@@ -62,9 +60,14 @@ def print_project(project):
     print0(int(project.design_need), color=1)
 
 
-def cli(objects, entities, used_resources):
+def cli(objects, entities, used_resources, turn_events):
     player = objects[0]
     project = objects[1]
+
+    for event in turn_events:
+        a, b = alert(windows[4], str(event))
+        del a
+        del b
 
     clear(windows[1])
 
@@ -85,10 +88,9 @@ def cli(objects, entities, used_resources):
 def print_limited(entities):
     clear(windows[2])
     print2("You have:")
+    entities = {x.message: x for x in entities}.values()
     for entity in entities:
-        print2(entity.message)
-
-    #print1("\n============")
+        print2("{}x {}".format(entity.current_amount, entity.message))
 
 
 def multiple_choice(question, choices):
@@ -97,34 +99,35 @@ def multiple_choice(question, choices):
     for number, choice in enumerate(choices):
         print1("{} {} a {}".format(number, choice.action_str, choice.message))
 
-    nothing_choice = number + 1
     print1("Enter: Do nothing.")
 
     answer = read(empty_ok=True)
 
-    if answer == nothing_choice or not answer:
+    try:
+        answer = int(answer)
+    except ValueError:
+        answer = False
+
+    if not answer:
         return None
     else:
-        answer = int(answer)
-        if answer <= len(choices):
+        if answer <= len(choices) - 1 :
             return choices[int(answer)]
         else:
             return None
 
 
 def win(project):
-    print0(chr(27) + "[2J")
-    print0("---------")
-    print0("YOU WON")
-    print0("---------")
-    print0(project)
-    print0("Score: {}".format(project.score))
+    clear(windows[1])
+    print1("---------")
+    print1("YOU WON")
+    print1("---------")
+    print1("Score: {}".format(project.score))
 
 
 def over(project):
-    print0(chr(27) + "[2J")
-    print0("---------")
-    print0("GAME OVER")
-    print0("---------")
-    print0(project)
-    print0("Score: {}".format(project.score))
+    clear(windows[1])
+    print1("---------")
+    print1("GAME OVER")
+    print1("---------")
+    print1("Score: {}".format(project.score))
