@@ -2,7 +2,7 @@ import random
 
 import ui
 from entity import Entity
-from resource import Resource, UsedResources
+from resources import UsedResources
 from exceptions import *
 
 import logging
