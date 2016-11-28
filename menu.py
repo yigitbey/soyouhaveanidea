@@ -4,6 +4,50 @@ from collections import namedtuple
 import curses
 from curses import panel
 
+
+class EntityDetail(object):
+    def __init__(self, entity, parent_window):
+        self.window = parent_window.derwin(15,0)
+        self.window.border(0,0,0,0,0,0,0,0)
+        self.window.addstr(entity.formatted)
+        self.window.refresh()
+        self.iwindow = self.window.derwin(2,2)
+
+        self.entity = entity
+
+        fields = [('initial_cost', "Initial Cost"),
+                ('cost', "Monthly Cost"),
+                ('productivity_modifier', "Productivity Modifier")
+                ]
+
+        for field in fields:
+            if getattr(entity, field[0]) != 0:
+                self.iwindow.addstr("{}: {}\n".format(field[1], getattr(entity, field[0])))
+
+        if entity.increases:
+            self.iwindow.addstr("Increases:\n")
+            for key, value in entity.increases.items():
+                if value != 0:
+                    self.iwindow.addstr("   {}: {}\n".format(key, value))
+        if entity.decreases:
+            self.iwindow.addstr("Decreases:\n")
+            for key, value in entity.decreases.items():
+                if value != 0:
+                    self.iwindow.addstr("   {}: {}\n".format(key, value))
+
+        self.iwindow.refresh()
+
+    def delete(self):
+        try:
+            self.window.clear()
+            self.iwindow.clear()
+            del self.window
+            del self.iwindow
+            del self
+
+        except:
+            pass
+
 class Menu(object):
 
     def __init__(self, items, parent_window):
@@ -18,6 +62,7 @@ class Menu(object):
         nothing = namedtuple("Nothing", 'message, action_str')
         nothing.message = "Nothing"
         nothing.action_str = "Do"
+        self.detailwindow = None
 
         self.items.append(nothing)
 
@@ -28,6 +73,18 @@ class Menu(object):
         elif self.position >= len(self.items):
             self.position = len(self.items)-1
 
+        if self.detailwindow:
+            self.detailwindow.delete()
+        self.showdetail()
+
+
+    def showdetail(self):
+        if self.detailwindow:
+           self.detailwindow.delete()
+        if self.position != len(self.items)-1:
+            self.detailwindow = EntityDetail(self.items[self.position], self.window)
+
+
     def display(self):
         self.window.clear()
         while True:
@@ -35,9 +92,9 @@ class Menu(object):
             curses.doupdate()
             for index, item in enumerate(self.items):
                 if index == self.position:
-                   mode = curses.A_REVERSE
+                    mode = curses.A_REVERSE
                 else:
-                   mode = curses.A_NORMAL
+                    mode = curses.A_NORMAL
 
                 msg = '%d. %s a %s' % (index, item.action_str, item.message)
                 self.window.addstr(1+index, 1, msg, mode)

@@ -13,6 +13,7 @@ class EntityMeta(type):
 
 class Entity(object, metaclass=EntityMeta):
     current_amount = 0
+    initial_cost = 0
     limit = -1
     unlocked = False
     unlocks_entities = []
@@ -23,6 +24,9 @@ class Entity(object, metaclass=EntityMeta):
     replenishes = {}
     inventory = {'money': 0}
     project = None
+    increases = {}
+    decreases = {}
+    productivity_modifier = 0
 
     def __init__(self, project=None, inventory=inventory, draining=drains, replenishing=replenishes):
 

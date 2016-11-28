@@ -87,7 +87,8 @@ class Developer(ProjectEmployee):
     cost = 0
     action_str = "Hire"
     inventory = {'money': 0}
-    productivity_drop = 0
+    productivity_modifier = 0
+
     increases = {}
     decreases = {}
     resign_prob = 0
@@ -110,7 +111,7 @@ class Developer(ProjectEmployee):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        Game.project.productivity *= (1 - self.productivity_drop)
+        Game.project.productivity *= (1 + self.productivity_modifier/100)
         self.increases['server_maintenance'] = self.decreases['features'] / 10
 
 
@@ -156,7 +157,7 @@ class Designer(ProjectEmployee):
     limit = -1
     formatted = "Designer"
     cost = 0
-    productivity_drop = 0.1
+    productivity_modifier = 0.1
     action_str = "Hire"
     inventory = {'money': 0}
 
@@ -228,7 +229,7 @@ class StudentDeveloper(Developer):
     limit = -1
     formatted = "Student Developer 👦"
     cost = 0
-    productivity_drop = 0.2
+    productivity_modifier = -20
 
     increases = {
         "bugs": 2,
@@ -244,7 +245,7 @@ class ShittyDeveloper(Developer):
     limit = -1
     formatted = u"Shitty Developer 💩"
     cost = 5
-    productivity_drop = 0.15
+    productivity_modifier = -15
 
     increases = {
         "bugs": 1,
@@ -257,7 +258,7 @@ class MediocreDeveloper(Developer):
     limit = -1
     formatted = "Mediocre Developer 👱"
     cost = 10
-    productivity_drop = 0.10
+    productivity_modifier = -10
 
     increases = {
         "bugs": 1,
@@ -273,7 +274,7 @@ class SeniorDeveloper(Developer):
     limit = -1
     formatted = "Senior Developer 👴"
     cost = 20
-    productivity_drop = 0.05
+    productivity_modifier = -5
 
     increases = {
         "bugs": 1,
@@ -290,7 +291,7 @@ class GeniusDeveloper(Developer):
     limit = 1
     formatted = "Genius Developer 🕵"
     cost = 100
-    productivity_drop = 0
+    productivity_modifier = 0
 
     increases = {
         "bugs": 1,
