@@ -3,8 +3,8 @@
 - [ ] Release
 - [ ] Customers
 - [ ] Customer support
-- [ ] COO
-- [ ] Investors
+- [x] COO
+- [x] Investors
 - [ ] Company Stock
 - [ ] Beurocracy
 - [ ] Balance
