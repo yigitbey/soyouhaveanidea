@@ -47,7 +47,7 @@ def print_project(project):
     print0("Bugs", end=": ")
     print0(project.bugs, color=1)
 
-    print0("Technical Dept", end=": ")
+    print0("Technical Debt", end=": ")
     print0(project.technical_debt, color=1)
 
     print0("Documentation", end=": ")
