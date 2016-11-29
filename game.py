@@ -458,10 +458,14 @@ class Game(object):
         )
 
         Boss.shares = 100
-        project_name, budget = ui.initproject(player.inventory['money'])
+        project_name, budget, idea = ui.initproject(player.inventory['money'])
 
         cls.project = Project()
         cls.project.name = project_name
+        cls.project.pitch = idea.pitch
+        cls.project.features = idea.features
+        cls.project.design_need = idea.design_need
+
         player.trade(cls.project, 'money', budget)
 
         cls.objects.append(player)

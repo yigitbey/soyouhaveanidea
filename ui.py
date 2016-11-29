@@ -3,6 +3,7 @@ import logging
 
 from nc import init_ui, printw, getstr, clear, alert
 from menu import Menu
+from idea import Idea
 
 windows = init_ui()
 print0 = partial(printw, windows[0])
@@ -12,8 +13,26 @@ print3 = partial(printw, windows[3])
 read = partial(getstr, windows[3])
 
 
+def list_ideas(count):
+    ideas = []
+    for i in range(count):
+        idea = Idea()
+        ideas.append(idea)
+        print1("{}. {}".format(i, idea))
+        print1("Features:{} Design:{}".format(idea.features, idea.design_need))
+        print1("-----")
+
+    return ideas
+
+
 def initproject(all_budget):
-    print1("So you have an idea")
+    print1("Choose your idea:")
+    print1("")
+    ideas = list_ideas(10)
+    idea = ideas[int(read())]
+    clear(windows[1])
+
+    print1("So you have an idea, you are going to build {}".format(idea))
     print1("What's the name of the project?")
 
     name = str(read(), 'utf-8')
@@ -30,12 +49,13 @@ def initproject(all_budget):
 
     clear(windows[1])
 
-    return name, budget
+    return name, budget, idea
 
 
 def print_project(project):
     clear(windows[0])
-    print0(project.name, color=3)
+    print0(project.name, color=4)
+    print0(project.pitch)
 
     print0("Budget", end=": ")
     print0("$" + str(project.money), color=2)
