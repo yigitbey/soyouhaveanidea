@@ -32,7 +32,8 @@ def initproject(all_budget):
     idea = ideas[int(read())]
     clear(windows[1])
 
-    print1("So you have an idea, you are going to build {}".format(idea))
+    idea_pitch = " ".join(idea.pitch.split(" ")[1:])
+    print1("So you have an idea, you are going to build {}".format(idea_pitch))
     print1("What's the name of the project?")
 
     name = str(read(), 'utf-8')
