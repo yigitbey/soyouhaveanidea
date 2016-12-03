@@ -98,3 +98,4 @@ class Entity(object, metaclass=EntityMeta):
                 return True
 
         return False
+

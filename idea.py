@@ -5,7 +5,7 @@ class Idea(object):
 
     def __init__(self):
         self.pitch = self.random_idea_generator()
-        self.features = randrange(900, 1500) * 10
+        self.features = randrange(90, 150) * 10
         self.design_need = randrange(10, 20) * 10
 
     def random_idea_generator(self):

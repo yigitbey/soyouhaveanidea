@@ -55,7 +55,7 @@ class EntityDetail(object):
 class Menu(object):
 
     def __init__(self, items, parent_window):
-        self.window = parent_window.derwin(3,0)
+        self.window = parent_window.derwin(1, 0)
         self.window.keypad(1)
         curses.noecho()
         curses.raw()

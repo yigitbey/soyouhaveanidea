@@ -33,6 +33,71 @@ class TeamEvent(Event):
     unlocked = False
 
 
+class TempEntity(Entity):
+    lasts = -1
+    temporary_increases = {}
+    temporary_decreases = {}
+    permanent_increases = {}
+    permanent_decreases = {}
+    formatted = "TempEntity"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lasts = self.__class__.lasts
+        for key, value in self.__class__.temporary_increases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val + value)
+        for key, value in self.__class__.temporary_decreases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+        for key, value in self.__class__.permanent_increases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val + value)
+        for key, value in self.__class__.permanent_decreases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+
+    def turn(self):
+        super().turn()
+
+        #TODO: move this block to entity logic
+        for key, value in self.increases.items():
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
+        for key, value in self.decreases.items():
+            value *= Game.project.productivity
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key - value)
+
+        if self.lasts:
+            self.lasts -= 1
+        else:
+            self.reset_effects()
+            Game.objects.remove(self)
+
+    def reset_effects(self):
+        for key, value in self.__class__.temporary_increases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+        for key, value in self.__class__.temporary_decreases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+
+
+class Burst(TempEntity):
+    lasts = 20
+    limit = 5
+    temporary_increases = {'productivity': 0.5}
+    increases = {
+        'bugs': 10,
+        'technical_debt': 10
+        }
+    unlocked = True
+    formatted = "Temporary Burst"
+    action_str = "Start"
+    detail_fields = [('lasts', "Increases productivity by %50 for {} turns")]
+
+
 class Resignment(object):
     def __init__(self, person, cause):
         logger.error("A")
@@ -98,7 +163,13 @@ class Developer(ProjectEmployee):
         for key, value in self.decreases.items():
             value *= Game.project.productivity
             project_key = getattr(Game.project, key)
-            setattr(Game.project, key, project_key - value)
+
+            #if there are no waiting features, fix bugs.
+            if key == 'features' and project_key <= 0:
+                project_key = getattr(Game.project, 'bugs')
+                setattr(Game.project, key, project_key - value/2)
+            else:
+                setattr(Game.project, key, project_key - value)
 
         threshold = self.resign_prob*Game.project.technical_debt/100*Game.project.bugs/1000
         logger.debug(threshold)
@@ -344,7 +415,7 @@ class Project(Entity):
         if Game.project.money <= 0:
             raise NotEnoughFundsException
 
-        if Game.project.features <= 0:
+        if Game.project.features <= 0 and Game.project.bugs <= 0:
             raise WinException
 
        # self.turn_events = []
@@ -409,6 +480,7 @@ class COO(ProjectEmployee):
         except Exception as e:
             logger.log(e)
 
+
 class Boss(Person):
     limit = 1
     formatted = "Boss"
@@ -436,7 +508,8 @@ class Game(object):
     entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
                 MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
                 ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent,
-                COO, SmallInvestor, BigInvestor
+                COO, SmallInvestor, BigInvestor,
+                Burst,
                 ]
 
     @classmethod

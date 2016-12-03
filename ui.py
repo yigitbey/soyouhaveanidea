@@ -53,10 +53,19 @@ def initproject(all_budget):
     return name, budget, idea
 
 
-def print_project(project):
+def print_project(project, used_resources, player):
     clear(windows[0])
-    print0(project.name, color=4)
+    print0("Day {}".format(used_resources.turn_count))
+    print0("Your Wallet: ${}\nYour shares: %{}".format(player.money, player.shares))
+
+    print0("-------------------------")
+    print0()
+
+    print0(project.name.capitalize(), color=4)
     print0(project.pitch)
+
+    print0("-------------------------")
+    print0()
 
     print0("Budget", end=": ")
     print0("$" + str(project.money), color=2)
@@ -71,7 +80,7 @@ def print_project(project):
     print0(project.bugs, color=1)
 
     print0("Technical Debt", end=": ")
-    print0(project.technical_debt, color=1)
+    print0(int(project.technical_debt), color=1)
 
     print0("Documentation", end=": ")
     print0(project.documentation, color=1)
@@ -97,9 +106,7 @@ def cli(objects, entities, used_resources, turn_events):
 
     clear(windows[1])
 
-    print1("Day {}".format(used_resources.turn_count))
-    print1("Your Wallet: ${} Your shares: %{}".format(player.money, player.shares))
-    print_project(project)
+    print_project(project, used_resources, player)
 
     unlocked_entities = [entity for entity in entities if entity.unlocked and not entity.limit_reached()]
     limited_entities = [entity for entity in entities if entity.limit_reached()]
@@ -136,6 +143,7 @@ def select(question, choices):
             return choices[int(answer)]
         else:
             return None
+
 
 def win(project):
     clear(windows[1])
