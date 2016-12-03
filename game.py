@@ -418,10 +418,19 @@ class Project(Entity):
         if Game.project.features <= 0 and Game.project.bugs <= 0:
             raise WinException
 
+        if Game.project.features <= 500:
+            BetaRelease.unlock()
+
        # self.turn_events = []
 
     def __repr__(self):
         return self.name
+
+    @property
+    def cash_flow(self):
+        expense = sum([o.cost for o in Game.objects])
+        income = sum([o.increases['money'] for o in Game.objects if 'money' in o.increases])
+        return income - expense
 
 
 class Investor(Entity):
@@ -466,6 +475,7 @@ class BigInvestor(Investor):
 
 
 class COO(ProjectEmployee):
+    limit = -1
     cost = 25
     unlocks_entities = [SmallInvestor, BigInvestor]
     formatted = "COO"
@@ -473,12 +483,86 @@ class COO(ProjectEmployee):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         Game.objects[0].cost = 26
-        try:
-            logger.debug(Game.project.turn_events)
-            Game.project.turn_events.append(AlertEvent("Your COO decided to pay the CEO(you) $30 each month."))
-            logger.debug(Game.project.turn_events)
-        except Exception as e:
-            logger.log(e)
+        Game.project.turn_events.append(AlertEvent("Your COO decided to pay the CEO(you) $26 each month."))
+
+
+class Customer(Entity):
+    limit = 20
+    increases = {
+        'money': 50,
+        'features': 3,
+        'design_need': 3,
+    }
+    formatted = "Customer"
+    action_str = "Get"
+    detail_fields = [('tolerance', 'Tolerance: %{}')]
+    tolerance = "%20-%80"
+
+    def __init__(self, *args, **kwargs):
+        super(Customer, self).__init__(*args, **kwargs)
+        self.tolerance = random.randrange(20, 80)
+
+    def turn(self):
+        super().turn()
+        for key, value in self.increases.items():
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
+
+        if Game.project.features / Game.project.initial_features > self.tolerance/100:
+            self.unsubscribe(reason="Underdelivery of promises")
+
+        if Game.project.bugs > 1000 * self.tolerance/100:
+            self.unsubscribe(reason="High amount of bugs")
+
+    def unsubscribe(self, reason):
+        Game.objects.remove(self)
+        event = AlertEvent("Your Customer decided to stop using your services.\nReason: {}".format(reason))
+        Game.project.turn_events.append(event)
+
+
+class BetaCustomer(Customer):
+    limit = 5
+    increases = {
+        'money': 30,
+        'features': 1,
+        'design_need': 1,
+    }
+    formatted = "Beta Customer"
+    tolerance = 80
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tolerance = 80
+
+
+class Release(Entity):
+    limit = -1
+    unlocks_entities = [Customer]
+    formatted = "Release"
+    action_str = "Release"
+
+
+class PublicRelease(Release):
+    limit = 1
+    increases = {
+        'design_need': 50,
+        'server_costs': 100,
+    }
+    unlocks_entities = [Customer]
+    formatted = "Golden Version"
+    action_str = "Release"
+    locks_entities = [BetaCustomer]
+
+
+class BetaRelease(Release):
+    limit = 1
+    increases = {
+        'design_need': 50,
+        'server_costs': 100,
+    }
+    unlocks_entities = [PublicRelease, BetaCustomer]
+    formatted = "Beta Version"
+    action_str = "Release"
 
 
 class Boss(Person):
@@ -510,6 +594,7 @@ class Game(object):
                 ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent,
                 COO, SmallInvestor, BigInvestor,
                 Burst,
+                BetaCustomer, Customer, PublicRelease, BetaRelease,
                 ]
 
     @classmethod

@@ -70,6 +70,9 @@ def print_project(project, used_resources, player):
     print0("Budget", end=": ")
     print0("$" + str(project.money), color=2)
 
+    print0("Cash Flow", end=": ")
+    print0("$" + str(project.cash_flow), color=2)
+
     print0("Productivity", end=": ")
     print0("%" + str(int(project.productivity*100)), color=2)
 
