@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from game import Game, Project
 from exceptions import *
 import ui
@@ -9,8 +11,8 @@ def start_game():
     win = False
 
     while not (over or win):
-
-        action = ui.cli(Game.objects, Game.entities, Game.used_resources, Game.project.turn_events)
+        action = ui.cli(Game.objects, Game.entities, Game.used_resources, Game.project.turn_events, Game.last_state)
+        Game.last_state = deepcopy(Game.project)
         if action:
             o = action(Game.project)
             Game.objects.append(o)

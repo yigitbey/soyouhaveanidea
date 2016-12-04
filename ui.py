@@ -47,7 +47,29 @@ def initproject(all_budget):
     return name, budget, idea
 
 
-def print_project(project, used_resources, player):
+def print_info(project, last, key, char="", reverse=False, multiplier=1):
+    val = getattr(project, key)
+    print0(char + str(int(val*multiplier)), end="")
+
+    if reverse:
+        positive = 1
+        negative = 2
+    else:
+        positive = 2
+        negative = 1
+
+    if last:
+        last_val = getattr(last, key)
+        delta = int(val) - int(last_val)
+        if delta < 0:
+            print0("({})".format(delta), color=negative, end="")
+        elif delta >0:
+            print0("(+{})".format(delta), color=positive, end="")
+
+    print0()
+
+
+def print_project(project, used_resources, player, last_state):
     clear(windows[0])
     print0("Day {}".format(used_resources.turn_count))
     print0("Your Wallet: ${}\nYour shares: %{}".format(player.money, player.shares))
@@ -68,28 +90,28 @@ def print_project(project, used_resources, player):
     print0("$" + str(project.cash_flow), color=2)
 
     print0("Productivity", end=": ")
-    print0("%" + str(int(project.productivity*100)), color=2)
+    print_info(project, last_state, 'productivity', multiplier=100)
 
-    print0("Remaining Features", end=": ")
-    print0(int(project.features), color=1)
+    print0("Rema. Features", end=": ")
+    print_info(project, last_state, 'features', reverse=True)
 
     print0("Bugs", end=": ")
-    print0(project.bugs, color=1)
+    print_info(project, last_state, 'bugs', reverse=True)
 
     print0("Technical Debt", end=": ")
-    print0(int(project.technical_debt), color=1)
+    print_info(project, last_state, 'technical_debt', reverse=True)
 
     print0("Documentation", end=": ")
-    print0(project.documentation, color=1)
+    print_info(project, last_state, 'documentation')
 
     print0("Server Costs", end=": ")
-    print0("$" + str(int(project.server_maintenance)), color=1)
+    print_info(project, last_state, 'server_maintenance', char="$", reverse=True)
 
     print0("Design Need", end=": ")
-    print0(int(project.design_need), color=1)
+    print_info(project, last_state, 'design_need', reverse=True)
 
 
-def cli(objects, entities, used_resources, turn_events):
+def cli(objects, entities, used_resources, turn_events, last_state):
     player = objects[0]
     project = objects[1]
 
@@ -103,7 +125,7 @@ def cli(objects, entities, used_resources, turn_events):
 
     clear(windows[1])
 
-    print_project(project, used_resources, player)
+    print_project(project, used_resources, player, last_state)
 
     unlocked_entities = [entity for entity in entities if entity.unlocked and not entity.limit_reached()]
     limited_entities = [entity for entity in entities if entity.limit_reached()]

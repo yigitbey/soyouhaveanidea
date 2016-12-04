@@ -1,5 +1,7 @@
 import random
 
+from copy import deepcopy
+
 import ui
 from entity import Entity
 from resources import UsedResources
@@ -167,7 +169,7 @@ class Developer(ProjectEmployee):
             #if there are no waiting features, fix bugs.
             if key == 'features' and project_key <= 0:
                 project_key = getattr(Game.project, 'bugs')
-                setattr(Game.project, key, project_key - value/2)
+                setattr(Game.project, 'bugs', project_key - value/2)
             else:
                 setattr(Game.project, key, project_key - value)
 
@@ -421,6 +423,8 @@ class Project(Entity):
         if Game.project.features <= 500:
             BetaRelease.unlock()
 
+
+
        # self.turn_events = []
 
     def __repr__(self):
@@ -515,7 +519,10 @@ class Customer(Entity):
             self.unsubscribe(reason="High amount of bugs")
 
     def unsubscribe(self, reason):
-        Game.objects.remove(self)
+        try:
+            Game.objects.remove(self)
+        except Exception:
+            pass
         event = AlertEvent("Your Customer decided to stop using your services.\nReason: {}".format(reason))
         Game.project.turn_events.append(event)
 
@@ -596,6 +603,7 @@ class Game(object):
                 Burst,
                 BetaCustomer, Customer, PublicRelease, BetaRelease,
                 ]
+    last_state = None
 
     @classmethod
     def init_game(cls):
