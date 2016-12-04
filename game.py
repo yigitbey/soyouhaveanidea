@@ -479,7 +479,7 @@ class BigInvestor(Investor):
 
 
 class COO(ProjectEmployee):
-    limit = -1
+    limit = 1
     cost = 25
     unlocks_entities = [SmallInvestor, BigInvestor]
     formatted = "COO"
