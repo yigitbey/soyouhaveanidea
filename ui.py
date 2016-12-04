@@ -2,7 +2,7 @@ from functools import partial
 import logging
 
 from nc import init_ui, printw, getstr, clear, alert
-from menu import Menu
+from menu import Menu, IdeaMenu
 from idea import Idea
 
 windows = init_ui()
@@ -18,18 +18,12 @@ def list_ideas(count):
     for i in range(count):
         idea = Idea()
         ideas.append(idea)
-        print1("{}. {}".format(i, idea))
-        print1("Features:{} Design:{}".format(idea.features, idea.design_need))
-        print1("-----")
 
-    return ideas
+    return select_idea("Choose your idea", ideas)
 
 
 def initproject(all_budget):
-    print1("Choose your idea:")
-    print1("")
-    ideas = list_ideas(10)
-    idea = ideas[int(read())]
+    idea = list_ideas(15)
     clear(windows[1])
 
     idea_pitch = " ".join(idea.pitch.split(" ")[1:])
@@ -146,6 +140,18 @@ def select(question, choices):
             return choices[int(answer)]
         else:
             return None
+
+
+def select_idea(question, choices):
+    print1(question)
+    answer_menu = IdeaMenu(choices, windows[1])
+    answer = answer_menu.display()
+    try:
+        answer = int(answer)
+    except (ValueError, TypeError):
+        answer = 0
+
+    return choices[int(answer)]
 
 
 def win(project):

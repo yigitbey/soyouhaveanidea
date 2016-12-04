@@ -7,6 +7,7 @@ class Idea(object):
         self.pitch = self.random_idea_generator()
         self.features = randrange(90, 150) * 10
         self.design_need = randrange(10, 20) * 10
+        self.action_str = ""
 
     def random_idea_generator(self):
         starters = ["Like", "We're"]
@@ -31,3 +32,11 @@ class Idea(object):
 
     def __repr__(self):
         return self.pitch
+
+    @property
+    def message(self):
+        return self.__repr__()
+
+    @property
+    def formatted(self):
+        return self.__repr__()

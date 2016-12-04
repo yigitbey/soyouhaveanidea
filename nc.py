@@ -113,6 +113,7 @@ def alert(window, text):
 
 
 def getstr(window, empty_ok=False):
+    curses.echo()
     window.clear()
     window.move(0, 0)
     if empty_ok:

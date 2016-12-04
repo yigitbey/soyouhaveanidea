@@ -7,11 +7,11 @@ from curses import panel
 
 class EntityDetail(object):
     def __init__(self, entity, parent_window):
-        self.window = parent_window.derwin(15,0)
+        self.window = parent_window.derwin(18, 0)
         self.window.border(0,0,0,0,0,0,0,0)
         self.window.addstr(entity.formatted)
         self.window.refresh()
-        self.iwindow = self.window.derwin(2,2)
+        self.iwindow = self.window.derwin(2, 2)
 
         self.entity = entity
 
@@ -52,6 +52,7 @@ class EntityDetail(object):
         except:
             pass
 
+
 class Menu(object):
 
     def __init__(self, items, parent_window):
@@ -81,13 +82,11 @@ class Menu(object):
             self.detailwindow.delete()
         self.showdetail()
 
-
     def showdetail(self):
         if self.detailwindow:
            self.detailwindow.delete()
         if self.position != len(self.items)-1:
             self.detailwindow = EntityDetail(self.items[self.position], self.window)
-
 
     def display(self):
         self.window.clear()
@@ -102,6 +101,56 @@ class Menu(object):
 
                 msg = '%d. %s a %s' % (index, item.action_str, item.message)
                 self.window.addstr(1+index, 1, msg, mode)
+
+            key = self.window.getch()
+
+            if key in [curses.KEY_ENTER, ord('\n')]:
+               if self.position == len(self.items)-1:
+                   return None
+               else:
+                   return self.position
+
+            if key == curses.KEY_UP:
+                self.navigate(-1)
+
+            elif key == curses.KEY_DOWN:
+                self.navigate(1)
+
+        self.window.clear()
+        curses.doupdate()
+
+
+class IdeaMenu(object):
+
+    def __init__(self, items, parent_window):
+        self.window = parent_window.derwin(1, 0)
+        self.window.keypad(1)
+        curses.noecho()
+        curses.raw()
+
+        self.position = 0
+        self.items = items
+
+    def navigate(self, n):
+        self.position += n
+        if self.position < 0:
+            self.position = 0
+        elif self.position >= len(self.items):
+            self.position = len(self.items)-1
+
+    def display(self):
+        self.window.clear()
+        while True:
+            self.window.refresh()
+            curses.doupdate()
+            for index, item in enumerate(self.items):
+                if index == self.position:
+                    mode = curses.A_REVERSE
+                else:
+                    mode = curses.A_NORMAL
+
+                msg = '%s. %s\n   (Features: %s, Design: %s)' % (index, item, item.features, item.design_need)
+                self.window.addstr(1+index*2, 2, msg, mode)
 
             key = self.window.getch()
 
