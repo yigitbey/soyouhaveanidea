@@ -1,5 +1,6 @@
 from functools import partial
 import logging
+from time import sleep
 
 from nc import init_ui, printw, getstr, clear, alert
 from menu import Menu, IdeaMenu
@@ -12,6 +13,11 @@ print2 = partial(printw, windows[2])
 print3 = partial(printw, windows[3])
 read = partial(getstr, windows[3])
 
+def wait_anim(sec):
+    for i in range(sec*50):
+        print3("-", end="")
+        sleep(0.02)
+    clear(windows[3])
 
 def list_ideas(count):
     ideas = []
@@ -71,7 +77,7 @@ def print_info(project, last, key, char="", reverse=False, multiplier=1):
 
 def print_project(project, used_resources, player, last_state):
     clear(windows[0])
-    print0("Day {}".format(used_resources.turn_count))
+    print0("Week {}".format(used_resources.turn_count))
     print0("Your Wallet: ${}\nYour shares: %{}".format(player.money, player.shares))
 
     print0("-------------------------")

@@ -4,6 +4,7 @@ from game import Game, Project
 from exceptions import *
 import ui
 
+SPEED = 10
 
 def start_game():
     Game.init_game()
@@ -36,6 +37,9 @@ def start_game():
 
 
         Game.used_resources.turn_count += 1
+
+        ui.wait_anim(int(10/SPEED))
+
 
     if over:
         ui.over(Game.project)
