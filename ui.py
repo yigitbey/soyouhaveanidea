@@ -13,11 +13,13 @@ print2 = partial(printw, windows[2])
 print3 = partial(printw, windows[3])
 read = partial(getstr, windows[3])
 
+
 def wait_anim(sec):
-    for i in range(sec*50):
+    for i in range(sec*20):
         print3("-", end="")
         sleep(0.02)
     clear(windows[3])
+
 
 def list_ideas(count):
     ideas = []
@@ -78,7 +80,8 @@ def print_info(project, last, key, char="", reverse=False, multiplier=1):
 def print_project(project, used_resources, player, last_state):
     clear(windows[0])
     print0("Week {}".format(used_resources.turn_count))
-    print0("Your Wallet: ${}\nYour shares: %{}".format(player.money, player.shares))
+    print0("Your Wallet: ${}({})".format(player.money, player.cash_flow), color=1)
+    print0("Your shares: %{}".format(player.shares))
 
     print0("-------------------------")
     print0()
@@ -90,10 +93,10 @@ def print_project(project, used_resources, player, last_state):
     print0()
 
     print0("Budget", end=": ")
-    print0("$" + str(project.money), color=2)
+    print0("$" + str(int(project.money)), color=2)
 
     print0("Cash Flow", end=": ")
-    print0("$" + str(project.cash_flow), color=2)
+    print0("$" + str(int(project.cash_flow)), color=2)
 
     print0("Productivity", end=": ")
     print_info(project, last_state, 'productivity', multiplier=100)
@@ -115,6 +118,9 @@ def print_project(project, used_resources, player, last_state):
 
     print0("Design Need", end=": ")
     print_info(project, last_state, 'design_need', reverse=True)
+
+    print0("Security Issues", end=":")
+    print_info(project, last_state, 'security_issues', reverse=True)
 
 
 def cli(objects, entities, used_resources, turn_events, last_state):

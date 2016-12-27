@@ -7,7 +7,7 @@ from curses import panel
 
 class EntityDetail(object):
     def __init__(self, entity, parent_window):
-        self.window = parent_window.derwin(18, 0)
+        self.window = parent_window.derwin(19, 0)
         self.window.border(0,0,0,0,0,0,0,0)
         self.window.addstr(entity.formatted)
         self.window.refresh()

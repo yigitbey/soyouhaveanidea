@@ -56,7 +56,6 @@ class Entity(object, metaclass=EntityMeta):
         self.drain()
         self.replenish()
 
-
     def drain(self):
         for key, value in self.draining.items():
             self.inventory[key] -= value
@@ -98,4 +97,5 @@ class Entity(object, metaclass=EntityMeta):
                 return True
 
         return False
+
 

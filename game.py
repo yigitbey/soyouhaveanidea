@@ -171,10 +171,11 @@ class Developer(ProjectEmployee):
                 project_key = getattr(Game.project, 'bugs')
                 setattr(Game.project, 'bugs', project_key - value/2)
             else:
-                setattr(Game.project, key, project_key - value)
+                if getattr(Game.project, key) > 0:
+                    setattr(Game.project, key, project_key - value)
 
         threshold = self.resign_prob*Game.project.technical_debt/100*Game.project.bugs/1000
-        logger.debug(threshold)
+
         if random.random() < threshold:
             self.resign("bugs and technical debt")
 
@@ -303,6 +304,7 @@ class StudentDeveloper(Developer):
     increases = {
         "bugs": 2,
         "technical_debt": 3,
+        'security_issues': 3,
     }
     decreases = {
         "features": 1,
@@ -319,6 +321,7 @@ class ShittyDeveloper(Developer):
     increases = {
         "bugs": 1,
         "technical_debt": 4,
+        "security_issues": 3,
     }
     decreases = {"features": 2}
 
@@ -332,7 +335,8 @@ class MediocreDeveloper(Developer):
     increases = {
         "bugs": 1,
         "technical_debt": 3,
-        "documentation": 1
+        "documentation": 1,
+        "security_issues": 1,
     }
     decreases = {
         "features": 3,
@@ -347,7 +351,8 @@ class SeniorDeveloper(Developer):
 
     increases = {
         "bugs": 1,
-        "documentation": 6
+        "documentation": 6,
+        "security_issues": 1,
     }
     decreases = {
         "features": 6,
@@ -374,6 +379,50 @@ class GeniusDeveloper(Developer):
     resign_prob = 0.1
 
 
+class SecurityEngineer(Developer):
+    limit = -1
+    formatted = "Security Engineer"
+    cost = 20
+    productivity_modifier = -10
+    increases = {
+        "server_maintenance": 20
+    }
+    decreases = {
+        "security_issues": 3,
+        "technical_debt": 1,
+    }
+
+    resign_prob = 0.01
+
+
+class DevopsEngineer(Developer):
+    limit = -1
+    formatted = "Devops Engineer"
+    productivity_modifier = 5
+    increases = {
+        "documentation": 5,
+    }
+    decreases = {
+        "server_maintenance": 100,
+        "technical_debt": 2,
+    }
+    cost = 20
+    resign_prob = 0.01
+
+
+class SecurityBreach(object):
+    unlocked = False
+
+    def __init__(self):
+        if self.unlocked:
+            Game.project.turn_events.append(AlertEvent("There has been a security breach and some customers are affected."))
+
+            customers = Game.get_customers()
+            for x in range(int(Game.project.security_issues/100)):
+                c = random.choice(customers)
+                c.unsubscribe(reason="Security Breach")
+
+
 class Project(Entity):
     name = "Project 1"
     limit = 1
@@ -384,6 +433,7 @@ class Project(Entity):
     technical_debt = 0
     documentation = 0
     server_maintenance = 0
+    security_issues = 0
     productivity = 1
     design_need = 0
     action_str = "Start"
@@ -404,6 +454,8 @@ class Project(Entity):
 
     def turn(self):
         super().turn()
+        Game.project.money -= Game.project.server_maintenance
+
         for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
@@ -414,16 +466,19 @@ class Project(Entity):
         if Game.project.features/Game.project.initial_features <= 0.8:
             COO.unlock()
 
+
+        if Game.project.features <= 500:
+            BetaRelease.unlock()
+
+        #Security Breach
+        if random.random() < Game.project.security_issues / 10000:
+            SecurityBreach()
+
         if Game.project.money <= 0:
             raise NotEnoughFundsException
 
         if Game.project.features <= 0 and Game.project.bugs <= 0:
             raise WinException
-
-        if Game.project.features <= 500:
-            BetaRelease.unlock()
-
-
 
        # self.turn_events = []
 
@@ -434,7 +489,7 @@ class Project(Entity):
     def cash_flow(self):
         expense = sum([o.cost for o in Game.objects])
         income = sum([o.increases['money'] for o in Game.objects if 'money' in o.increases])
-        return income - expense
+        return income - expense - Game.project.server_maintenance
 
 
 class Investor(Entity):
@@ -486,8 +541,9 @@ class COO(ProjectEmployee):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        #hack to pay ceo
         Game.objects[0].cost = 26
-        Game.project.turn_events.append(AlertEvent("Your COO decided to pay the CEO(you) $26 each month."))
+        Game.project.turn_events.append(AlertEvent("Your COO suggested to pay the CEO(you) $26 each month."))
 
 
 class Customer(Entity):
@@ -505,6 +561,7 @@ class Customer(Entity):
     def __init__(self, *args, **kwargs):
         super(Customer, self).__init__(*args, **kwargs)
         self.tolerance = random.randrange(20, 80)
+        SecurityBreach.unlocked = True
 
     def turn(self):
         super().turn()
@@ -553,7 +610,7 @@ class PublicRelease(Release):
     limit = 1
     increases = {
         'design_need': 50,
-        'server_costs': 100,
+        'server_maintenance': 100,
     }
     unlocks_entities = [Customer]
     formatted = "Golden Version"
@@ -565,9 +622,9 @@ class BetaRelease(Release):
     limit = 1
     increases = {
         'design_need': 50,
-        'server_costs': 100,
+        'server_maintenance': 100,
     }
-    unlocks_entities = [PublicRelease, BetaCustomer]
+    unlocks_entities = [PublicRelease, BetaCustomer, SecurityEngineer, DevopsEngineer]
     formatted = "Beta Version"
     action_str = "Release"
 
@@ -589,6 +646,9 @@ class Boss(Person):
         if self.money <= 0:
             raise NotEnoughFundsException
 
+    @property
+    def cash_flow(self):
+        return (self.draining['money'] - self.cost) * -1
 
 class Game(object):
 
@@ -597,6 +657,7 @@ class Game(object):
     project = None
 
     entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
+                SecurityEngineer, DevopsEngineer,
                 MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
                 ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent,
                 COO, SmallInvestor, BigInvestor,
@@ -638,4 +699,6 @@ class Game(object):
         cls.objects.append(cls.project)
         player.project = cls.project
 
-        logger.error("BBB")
+    @classmethod
+    def get_customers(cls):
+        return [o for o in cls.objects if isinstance(o, Customer)]

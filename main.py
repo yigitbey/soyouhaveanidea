@@ -6,6 +6,7 @@ import ui
 
 SPEED = 10
 
+
 def start_game():
     Game.init_game()
     over = False
@@ -34,7 +35,6 @@ def start_game():
             over = True
         except WinException:
             win = True
-
 
         Game.used_resources.turn_count += 1
 
