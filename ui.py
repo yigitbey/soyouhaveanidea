@@ -96,10 +96,11 @@ def print_project(project, used_resources, player, last_state):
     print0("$" + str(int(project.money)), color=2)
 
     print0("Cash Flow", end=": ")
-    print0("$" + str(int(project.cash_flow)), color=2)
+    print0("$" + str(int(project.cash_flow)), color=1)
+
 
     print0("Productivity", end=": ")
-    print_info(project, last_state, 'productivity', multiplier=100)
+    print_info(project, last_state, 'productivity', char="%", multiplier=100)
 
     print0("Rema. Features", end=": ")
     print_info(project, last_state, 'features', reverse=True)
@@ -188,19 +189,39 @@ def select_idea(question, choices):
     return choices[int(answer)]
 
 
-def win(project):
+def win(project, player):
     clear(windows[1])
-    print1("---------")
-    print1("YOU WON")
-    print1("---------")
-    print1("Score: {}".format(project.score))
-    windows[1].getch()
+
+    win_amount = (player.shares/100) * project.score
+
+    print1("---------", color=2)
+    print1("Congratulations!", color=2)
+    print1("Big Tech company decided to buy your company for ${}!".format(project.score))
+    print1("You own %{} of the shares, so you get ${}!".format(player.shares, win_amount))
+    print1("Your total money:", end=": ")
+    print1("${}".format(win_amount + player.money), color=2)
+
+    print1("---------", color=2)
+
+    print1()
+    print1("Press Q to exit.", color=1)
+    while True:
+        key = windows[1].getkey()
+        if key == "Q" or key == 'q':
+            [clear(w) for w in windows]
+            exit(0)
 
 
-def over(project):
+def over(project, player):
     clear(windows[1])
-    print1("---------")
-    print1("GAME OVER")
-    print1("---------")
+    print1("---------", color=1)
+    print1("GAME OVER", color=1)
+    print1("---------", color=1)
     print1("Score: {}".format(project.score))
-    windows[1].getch()
+    print1()
+    print1("Press Q to exit.", color=1)
+    while True:
+        key = windows[1].getkey()
+        if key == "Q" or key == 'q':
+            [clear(w) for w in windows]
+            exit(0)

@@ -40,12 +40,13 @@ def start_game():
 
         ui.wait_anim(int(10/SPEED))
 
+    player = Game.objects[0]
 
     if over:
-        ui.over(Game.project)
+        ui.over(Game.project, player)
 
     if win:
-        ui.win(Game.project)
+        ui.win(Game.project, player)
 
 if __name__ == "__main__":
     start_game()

@@ -182,7 +182,7 @@ class Developer(ProjectEmployee):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         Game.project.productivity *= (1 + self.productivity_modifier/100)
-        self.increases['server_maintenance'] = self.decreases['features'] / 10
+        self.increases['server_maintenance'] = self.decreases['features'] / 30
 
 
 class CoffeeMachine(Entity):
@@ -390,6 +390,7 @@ class SecurityEngineer(Developer):
     decreases = {
         "security_issues": 3,
         "technical_debt": 1,
+        "features": 1,
     }
 
     resign_prob = 0.01
@@ -405,6 +406,7 @@ class DevopsEngineer(Developer):
     decreases = {
         "server_maintenance": 100,
         "technical_debt": 2,
+        "features": 2,
     }
     cost = 20
     resign_prob = 0.01
@@ -421,7 +423,6 @@ class SecurityBreach(object):
             for x in range(int(Game.project.security_issues/100)):
                 c = random.choice(customers)
                 c.unsubscribe(reason="Security Breach")
-
 
 
 class Project(Entity):
@@ -450,11 +451,14 @@ class Project(Entity):
 
     @property
     def score(self):
-        score = ((self.features * -1 / 2) - self.bugs - self.technical_debt + self.documentation * 3 - self.server_maintenance - self.design_need + self.money) * self.productivity
+        score = 1000 * ((self.features * -1 / 2) - self.bugs - self.technical_debt + self.documentation * 3 - self.server_maintenance - self.design_need + self.money) * self.productivity
         return score
 
     def turn(self):
         super().turn()
+        for e in Game.entities:
+            if e.unlocked:
+                e.unlocked_age += 1
         Game.project.money -= Game.project.server_maintenance
 
         for key, value in self.increases.items():
@@ -468,7 +472,6 @@ class Project(Entity):
 
         if Game.project.features/Game.project.initial_features <= 0.8:
             COO.unlock()
-
 
         if Game.project.features <= 500:
             BetaRelease.unlock()

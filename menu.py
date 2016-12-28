@@ -99,6 +99,12 @@ class Menu(object):
                 else:
                     mode = curses.A_NORMAL
 
+                try:
+                    if item.unlocked_age < 2:
+                        mode = mode | curses.A_BOLD | curses.A_UNDERLINE
+                except:
+                    pass
+
                 msg = '%d. %s a %s' % (index, item.action_str, item.message)
                 self.window.addstr(1+index, 1, msg, mode)
 

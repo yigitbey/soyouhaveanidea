@@ -16,6 +16,8 @@ class Entity(object, metaclass=EntityMeta):
     initial_cost = 0
     limit = -1
     unlocked = False
+    age = 0
+    unlocked_age = 0
     unlocks_entities = []
     locks_entities = []
     cost = 0
@@ -55,6 +57,7 @@ class Entity(object, metaclass=EntityMeta):
     def turn(self):
         self.drain()
         self.replenish()
+        self.age += 1
 
     def drain(self):
         for key, value in self.draining.items():
@@ -76,6 +79,7 @@ class Entity(object, metaclass=EntityMeta):
     def unlocks(cls):
         for entity in cls.unlocks_entities:
             entity.unlock()
+
 
     @classmethod
     def locks(cls):
