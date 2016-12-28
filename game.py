@@ -423,6 +423,7 @@ class SecurityBreach(object):
                 c.unsubscribe(reason="Security Breach")
 
 
+
 class Project(Entity):
     name = "Project 1"
     limit = 1
@@ -459,6 +460,8 @@ class Project(Entity):
         for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
+
+        Game.project.productivity *= (1 - (Game.project.technical_debt / 20000))
 
         if Game.project.features/Game.project.initial_features <= 0.9:
             ProjectManager.unlock()
