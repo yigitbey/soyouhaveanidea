@@ -70,11 +70,11 @@ class Menu(object):
         nothing.action_str = "Do"
         self.detailwindow = None
 
-        self.items.append(nothing)
+        self.items.insert(0, nothing)
 
         code = locale.getpreferredencoding()
-        self.arrow_up = '\u2191'.encode(code)
-        self.arrow_down = '\u2193'.encode(code)
+        self.arrow_up = '\u2191\u2191\u2191'.encode(code)
+        self.arrow_down = '\u2193\u2193\u2193'.encode(code)
 
         self.first_item_index = self.position
         self.last_item_index = self.LIST_SIZE
@@ -102,7 +102,7 @@ class Menu(object):
         self.window.clear()
         if self.detailwindow:
             self.detailwindow.delete()
-        if self.position != len(self.items)-1:
+        if self.position != 0:
             self.detailwindow = EntityDetail(self.items[self.position], self.window)
 
     # TODO: refactor this
@@ -135,14 +135,14 @@ class Menu(object):
                     pass
 
                 if self.first_item_index > 0:
-                    self.window.addstr(0, 39, self.arrow_up)
+                    self.window.addstr(0, 37, self.arrow_up)
 
                 order = self.first_item_index + index + 1
                 msg = '%d. %s a %s' % (order, item.action_str, item.message)
                 self.window.addstr(1+index, 1, msg, mode)
 
                 if self.last_item_index < len(self.items):
-                    self.window.addstr(self.LIST_SIZE+1, 39, self.arrow_down)
+                    self.window.addstr(self.LIST_SIZE+1, 37, self.arrow_down)
 
             key = self.window.getch()
 
