@@ -1,5 +1,7 @@
 import random
 
+from copy import deepcopy
+
 import ui
 from entity import Entity
 from resources import UsedResources
@@ -31,6 +33,71 @@ class TeamEvent(Event):
     formatted = "Team Event (Productivity: +{}, Initial Cost: {})".format(productivity_modifier, initial_cost)
 
     unlocked = False
+
+
+class TempEntity(Entity):
+    lasts = -1
+    temporary_increases = {}
+    temporary_decreases = {}
+    permanent_increases = {}
+    permanent_decreases = {}
+    formatted = "TempEntity"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lasts = self.__class__.lasts
+        for key, value in self.__class__.temporary_increases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val + value)
+        for key, value in self.__class__.temporary_decreases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+        for key, value in self.__class__.permanent_increases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val + value)
+        for key, value in self.__class__.permanent_decreases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+
+    def turn(self):
+        super().turn()
+
+        #TODO: move this block to entity logic
+        for key, value in self.increases.items():
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
+        for key, value in self.decreases.items():
+            value *= Game.project.productivity
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key - value)
+
+        if self.lasts:
+            self.lasts -= 1
+        else:
+            self.reset_effects()
+            Game.objects.remove(self)
+
+    def reset_effects(self):
+        for key, value in self.__class__.temporary_increases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+        for key, value in self.__class__.temporary_decreases.items():
+            val = getattr(Game.project, key)
+            setattr(Game.project, key, val - value)
+
+
+class Burst(TempEntity):
+    lasts = 20
+    limit = 5
+    temporary_increases = {'productivity': 0.5}
+    increases = {
+        'bugs': 10,
+        'technical_debt': 10
+        }
+    unlocked = True
+    formatted = "Temporary Burst"
+    action_str = "Start"
+    detail_fields = [('lasts', "Increases productivity by %50 for {} turns")]
 
 
 class Resignment(object):
@@ -98,17 +165,24 @@ class Developer(ProjectEmployee):
         for key, value in self.decreases.items():
             value *= Game.project.productivity
             project_key = getattr(Game.project, key)
-            setattr(Game.project, key, project_key - value)
+
+            #if there are no waiting features, fix bugs.
+            if key == 'features' and project_key <= 0:
+                project_key = getattr(Game.project, 'bugs')
+                setattr(Game.project, 'bugs', project_key - value/2)
+            else:
+                if getattr(Game.project, key) > 0:
+                    setattr(Game.project, key, project_key - value)
 
         threshold = self.resign_prob*Game.project.technical_debt/100*Game.project.bugs/1000
-        logger.debug(threshold)
+
         if random.random() < threshold:
             self.resign("bugs and technical debt")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         Game.project.productivity *= (1 + self.productivity_modifier/100)
-        self.increases['server_maintenance'] = self.decreases['features'] / 10
+        self.increases['server_maintenance'] = self.decreases['features'] / 30
 
 
 class CoffeeMachine(Entity):
@@ -230,6 +304,7 @@ class StudentDeveloper(Developer):
     increases = {
         "bugs": 2,
         "technical_debt": 3,
+        'security_issues': 3,
     }
     decreases = {
         "features": 1,
@@ -246,6 +321,7 @@ class ShittyDeveloper(Developer):
     increases = {
         "bugs": 1,
         "technical_debt": 4,
+        "security_issues": 3,
     }
     decreases = {"features": 2}
 
@@ -259,7 +335,8 @@ class MediocreDeveloper(Developer):
     increases = {
         "bugs": 1,
         "technical_debt": 3,
-        "documentation": 1
+        "documentation": 1,
+        "security_issues": 1,
     }
     decreases = {
         "features": 3,
@@ -274,7 +351,8 @@ class SeniorDeveloper(Developer):
 
     increases = {
         "bugs": 1,
-        "documentation": 6
+        "documentation": 6,
+        "security_issues": 1,
     }
     decreases = {
         "features": 6,
@@ -301,6 +379,52 @@ class GeniusDeveloper(Developer):
     resign_prob = 0.1
 
 
+class SecurityEngineer(Developer):
+    limit = -1
+    formatted = "Security Engineer"
+    cost = 20
+    productivity_modifier = -10
+    increases = {
+        "server_maintenance": 20
+    }
+    decreases = {
+        "security_issues": 3,
+        "technical_debt": 1,
+        "features": 1,
+    }
+
+    resign_prob = 0.01
+
+
+class DevopsEngineer(Developer):
+    limit = -1
+    formatted = "Devops Engineer"
+    productivity_modifier = 5
+    increases = {
+        "documentation": 5,
+    }
+    decreases = {
+        "server_maintenance": 100,
+        "technical_debt": 2,
+        "features": 2,
+    }
+    cost = 20
+    resign_prob = 0.01
+
+
+class SecurityBreach(object):
+    unlocked = False
+
+    def __init__(self):
+        if self.unlocked:
+            Game.project.turn_events.append(AlertEvent("There has been a security breach and some customers are affected."))
+
+            customers = Game.get_customers()
+            for x in range(int(Game.project.security_issues/100)):
+                c = random.choice(customers)
+                c.unsubscribe(reason="Security Breach")
+
+
 class Project(Entity):
     name = "Project 1"
     limit = 1
@@ -311,6 +435,7 @@ class Project(Entity):
     technical_debt = 0
     documentation = 0
     server_maintenance = 0
+    security_issues = 0
     productivity = 1
     design_need = 0
     action_str = "Start"
@@ -326,14 +451,21 @@ class Project(Entity):
 
     @property
     def score(self):
-        score = ((self.features * -1 / 2) - self.bugs - self.technical_debt + self.documentation * 3 - self.server_maintenance - self.design_need + self.money) * self.productivity
+        score = 1000 * ((self.features * -1 / 2) - self.bugs - self.technical_debt + self.documentation * 3 - self.server_maintenance - self.design_need + self.money) * self.productivity
         return score
 
     def turn(self):
         super().turn()
+        for e in Game.entities:
+            if e.unlocked:
+                e.unlocked_age += 1
+        Game.project.money -= Game.project.server_maintenance
+
         for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
+
+        Game.project.productivity *= (1 - (Game.project.technical_debt / 20000))
 
         if Game.project.features/Game.project.initial_features <= 0.9:
             ProjectManager.unlock()
@@ -341,16 +473,29 @@ class Project(Entity):
         if Game.project.features/Game.project.initial_features <= 0.8:
             COO.unlock()
 
+        if Game.project.features <= 500:
+            BetaRelease.unlock()
+
+        #Security Breach
+        if random.random() < Game.project.security_issues / 10000:
+            SecurityBreach()
+
         if Game.project.money <= 0:
             raise NotEnoughFundsException
 
-        if Game.project.features <= 0:
+        if Game.project.features <= 0 and Game.project.bugs <= 0:
             raise WinException
 
        # self.turn_events = []
 
     def __repr__(self):
         return self.name
+
+    @property
+    def cash_flow(self):
+        expense = sum([o.cost for o in Game.objects])
+        income = sum([o.increases['money'] for o in Game.objects if 'money' in o.increases])
+        return income - expense - Game.project.server_maintenance
 
 
 class Investor(Entity):
@@ -395,19 +540,100 @@ class BigInvestor(Investor):
 
 
 class COO(ProjectEmployee):
+    limit = 1
     cost = 25
     unlocks_entities = [SmallInvestor, BigInvestor]
     formatted = "COO"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        #hack to pay ceo
         Game.objects[0].cost = 26
+        Game.project.turn_events.append(AlertEvent("Your COO suggested to pay the CEO(you) $26 each month."))
+
+
+class Customer(Entity):
+    limit = 20
+    increases = {
+        'money': 50,
+        'features': 3,
+        'design_need': 3,
+    }
+    formatted = "Customer"
+    action_str = "Get"
+    detail_fields = [('tolerance', 'Tolerance: %{}')]
+    tolerance = "%20-%80"
+
+    def __init__(self, *args, **kwargs):
+        super(Customer, self).__init__(*args, **kwargs)
+        self.tolerance = random.randrange(20, 80)
+        SecurityBreach.unlocked = True
+
+    def turn(self):
+        super().turn()
+        for key, value in self.increases.items():
+            project_key = getattr(Game.project, key)
+            setattr(Game.project, key, project_key + value)
+
+        if Game.project.features / Game.project.initial_features > self.tolerance/100:
+            self.unsubscribe(reason="Underdelivery of promises")
+
+        if Game.project.bugs > 1000 * self.tolerance/100:
+            self.unsubscribe(reason="High amount of bugs")
+
+    def unsubscribe(self, reason):
         try:
-            logger.debug(Game.project.turn_events)
-            Game.project.turn_events.append(AlertEvent("Your COO decided to pay the CEO(you) $30 each month."))
-            logger.debug(Game.project.turn_events)
-        except Exception as e:
-            logger.log(e)
+            Game.objects.remove(self)
+        except Exception:
+            pass
+        event = AlertEvent("Your Customer decided to stop using your services.\nReason: {}".format(reason))
+        Game.project.turn_events.append(event)
+
+
+class BetaCustomer(Customer):
+    limit = 5
+    increases = {
+        'money': 30,
+        'features': 1,
+        'design_need': 1,
+    }
+    formatted = "Beta Customer"
+    tolerance = 80
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tolerance = 80
+
+
+class Release(Entity):
+    limit = -1
+    unlocks_entities = [Customer]
+    formatted = "Release"
+    action_str = "Release"
+
+
+class PublicRelease(Release):
+    limit = 1
+    increases = {
+        'design_need': 50,
+        'server_maintenance': 100,
+    }
+    unlocks_entities = [Customer]
+    formatted = "Golden Version"
+    action_str = "Release"
+    locks_entities = [BetaCustomer]
+
+
+class BetaRelease(Release):
+    limit = 1
+    increases = {
+        'design_need': 50,
+        'server_maintenance': 100,
+    }
+    unlocks_entities = [PublicRelease, BetaCustomer, SecurityEngineer, DevopsEngineer]
+    formatted = "Beta Version"
+    action_str = "Release"
+
 
 class Boss(Person):
     limit = 1
@@ -426,6 +652,9 @@ class Boss(Person):
         if self.money <= 0:
             raise NotEnoughFundsException
 
+    @property
+    def cash_flow(self):
+        return (self.draining['money'] - self.cost) * -1
 
 class Game(object):
 
@@ -434,10 +663,14 @@ class Game(object):
     project = None
 
     entities = [Boss, StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper,
+                SecurityEngineer, DevopsEngineer,
                 MediocreDesigner, StudentDesigner, ShittyDesigner, SeniorDesigner, ProjectManager,
                 ShittyCoffeeMachine, GoodCoffeeMachine, ArtisanCoffeeMachine, TeamEvent,
-                COO, SmallInvestor, BigInvestor
+                COO, SmallInvestor, BigInvestor,
+                Burst,
+                BetaCustomer, Customer, PublicRelease, BetaRelease,
                 ]
+    last_state = None
 
     @classmethod
     def init_game(cls):
@@ -458,14 +691,20 @@ class Game(object):
         )
 
         Boss.shares = 100
-        project_name, budget = ui.initproject(player.inventory['money'])
+        project_name, budget, idea = ui.initproject(player.inventory['money'])
 
         cls.project = Project()
         cls.project.name = project_name
+        cls.project.pitch = idea.pitch
+        cls.project.features = idea.features
+        cls.project.design_need = idea.design_need
+
         player.trade(cls.project, 'money', budget)
 
         cls.objects.append(player)
         cls.objects.append(cls.project)
         player.project = cls.project
 
-        logger.error("BBB")
+    @classmethod
+    def get_customers(cls):
+        return [o for o in cls.objects if isinstance(o, Customer)]

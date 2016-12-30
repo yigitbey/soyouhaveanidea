@@ -85,7 +85,7 @@ def init_ui():
     return left_win, middle_win, right_win, bottom_win, win
 
 
-def printw(window, text, end="\n", color=0):
+def printw(window, text="", end="\n", color=0):
     if not isinstance(text, str):
         text = repr(text)
     window.addstr(text + end, curses.color_pair(color))
@@ -113,6 +113,7 @@ def alert(window, text):
 
 
 def getstr(window, empty_ok=False):
+    curses.echo()
     window.clear()
     window.move(0, 0)
     if empty_ok:
