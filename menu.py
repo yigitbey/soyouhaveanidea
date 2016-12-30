@@ -54,7 +54,7 @@ class EntityDetail(object):
 
 
 class Menu(object):
-    LIST_SIZE = 3
+    LIST_SIZE = 10
 
     def __init__(self, items, parent_window):
         self.window = parent_window.derwin(1, 0)
