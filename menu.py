@@ -105,6 +105,7 @@ class Menu(object):
         if self.position != len(self.items)-1:
             self.detailwindow = EntityDetail(self.items[self.position], self.window)
 
+    # TODO: refactor this
     def select_mode(self, index):
         if self.first_item_index == 0 and index == self.position:
             mode = curses.A_REVERSE
@@ -160,7 +161,7 @@ class Menu(object):
         self.window.clear()
         curses.doupdate()
 
-
+# TODO: scrolling this
 class IdeaMenu(object):
 
     def __init__(self, items, parent_window):
