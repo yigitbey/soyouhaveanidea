@@ -54,7 +54,7 @@ class EntityDetail(object):
 
 
 class Menu(object):
-    LIST_SIZE = 10
+    LIST_SIZE = 14
 
     def __init__(self, items, parent_window):
         self.window = parent_window.derwin(1, 0)
@@ -135,28 +135,28 @@ class Menu(object):
                     pass
 
                 if self.first_item_index > 0:
-                    self.window.addstr(0, 37, self.arrow_up)
+                    self.window.addstr(0, 20, self.arrow_up)
 
                 order = self.first_item_index + index + 1
                 msg = '%d. %s a %s' % (order, item.action_str, item.message)
                 self.window.addstr(1+index, 1, msg, mode)
 
                 if self.last_item_index < len(self.items):
-                    self.window.addstr(self.LIST_SIZE+1, 37, self.arrow_down)
+                    self.window.addstr(self.LIST_SIZE+1, 20, self.arrow_down)
 
             key = self.window.getch()
 
             if key in [curses.KEY_ENTER, ord('\n')]:
-               if self.position == len(self.items)-1:
-                   return None
-               else:
-                   return self.position
+                return self.position
 
             if key == curses.KEY_UP:
-                self.navigate(-1)
+                if self.position == 0:
+                    self.navigate(self.last_item_index)
+                else:
+                    self.navigate(-1)
 
             elif key == curses.KEY_DOWN:
-                self.navigate(1)
+                    self.navigate(1)
 
         self.window.clear()
         curses.doupdate()
