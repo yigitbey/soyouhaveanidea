@@ -73,8 +73,8 @@ class Menu(object):
         self.items.insert(0, nothing)
 
         code = locale.getpreferredencoding()
-        self.arrow_up = '\u2191\u2191\u2191'.encode(code)
-        self.arrow_down = '\u2193\u2193\u2193'.encode(code)
+        self.arrow_up = (3*'\u2191').encode(code)
+        self.arrow_down = (3*'\u2193').encode(code)
 
         self.first_item_index = self.position
         self.last_item_index = self.LIST_SIZE
