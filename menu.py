@@ -2,11 +2,7 @@
 from collections import namedtuple
 
 import curses
-from curses import panel
-
 import locale
-import logging
-logger = logging.getLogger('soyu')
 
 
 class EntityDetail(object):
@@ -81,12 +77,8 @@ class Menu(object):
 
         self.first_item_index = self.position
         self.last_item_index = self.LIST_SIZE
-        logger.debug("%s" % len(self.items))
-        logger.debug(self.items[:-1])
-        logger.debug("initial %s: %s - %s" % (self.position, self.first_item_index, self.last_item_index))
 
     def navigate(self, n):
-        logger.debug("before %s: %s - %s" % (self.position, self.first_item_index, self.last_item_index))
         self.position += n
         if self.position < 0:
             self.position = 0
@@ -97,7 +89,6 @@ class Menu(object):
             self.first_item_index += n
             self.last_item_index += n
 
-        logger.debug("after %s: %s - %s" % (self.position, self.first_item_index, self.last_item_index))
         if self.detailwindow:
             self.detailwindow.delete()
         self.showdetail()
