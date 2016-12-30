@@ -4,6 +4,10 @@ from collections import namedtuple
 import curses
 from curses import panel
 
+import locale
+import logging
+logger = logging.getLogger('soyu')
+
 
 class EntityDetail(object):
     def __init__(self, entity, parent_window):
@@ -15,10 +19,11 @@ class EntityDetail(object):
 
         self.entity = entity
 
-        fields = [('initial_cost', "Initial Cost"),
-                ('cost', "Monthly Cost"),
-                ('productivity_modifier', "Productivity Modifier")
-                ]
+        fields = [
+            ('initial_cost', "Initial Cost"),
+            ('cost', "Monthly Cost"),
+            ('productivity_modifier', "Productivity Modifier")
+        ]
 
         for field in fields:
             if getattr(entity, field[0]) != 0:
@@ -48,11 +53,11 @@ class EntityDetail(object):
             del self.window
             del self.iwindow
             del self
-
         except:
             pass
 
 class Menu(object):
+    LIST_SIZE = 3
 
     def __init__(self, items, parent_window):
         self.window = parent_window.derwin(3,0)
@@ -60,7 +65,7 @@ class Menu(object):
         curses.noecho()
         curses.raw()
 
-        self.position = len(items)
+        self.position = 0
         self.items = items
 
         nothing = namedtuple("Nothing", 'message, action_str')
@@ -70,38 +75,76 @@ class Menu(object):
 
         self.items.append(nothing)
 
+        code = locale.getpreferredencoding()
+        self.arrow_up = '\u2191'.encode(code)
+        self.arrow_down = '\u2193'.encode(code)
+
+        self.first_item_index = self.position
+        self.last_item_index = self.LIST_SIZE
+        logger.debug("%s" % len(self.items))
+        logger.debug(self.items[:-1])
+        logger.debug("initial %s: %s - %s" % (self.position, self.first_item_index, self.last_item_index))
+
     def navigate(self, n):
+        logger.debug("before %s: %s - %s" % (self.position, self.first_item_index, self.last_item_index))
         self.position += n
         if self.position < 0:
             self.position = 0
         elif self.position >= len(self.items):
             self.position = len(self.items)-1
 
+        if (self.position >= self.last_item_index) or (self.position < self.first_item_index):
+            self.first_item_index += n
+            self.last_item_index += n
+
+        logger.debug("after %s: %s - %s" % (self.position, self.first_item_index, self.last_item_index))
         if self.detailwindow:
             self.detailwindow.delete()
         self.showdetail()
 
+    @property
+    def employees(self):
+        return self.items[self.first_item_index: self.last_item_index]
 
     def showdetail(self):
+        self.window.clear()
         if self.detailwindow:
-           self.detailwindow.delete()
+            self.detailwindow.delete()
         if self.position != len(self.items)-1:
             self.detailwindow = EntityDetail(self.items[self.position], self.window)
 
+    def select_mode(self, index):
+        if self.first_item_index == 0 and index == self.position:
+            mode = curses.A_REVERSE
+        elif (self.position - self.first_item_index) == index:
+            mode = curses.A_REVERSE
+        elif (self.position + 1 == self.last_item_index) and (index == len(self.employees) - 1):
+            mode = curses.A_REVERSE
+        else:
+            mode = curses.A_NORMAL
+
+        return mode
 
     def display(self):
         self.window.clear()
+        self.showdetail()
         while True:
             self.window.refresh()
             curses.doupdate()
-            for index, item in enumerate(self.items):
-                if index == self.position:
-                    mode = curses.A_REVERSE
-                else:
-                    mode = curses.A_NORMAL
 
-                msg = '%d. %s a %s' % (index, item.action_str, item.message)
+            for index, item in enumerate(self.employees):
+                mode = self.select_mode(index)
+
+                if self.first_item_index > 0:
+                    self.window.addstr(0, 39, self.arrow_up)
+
+                order = self.first_item_index + index + 1
+                msg = '%d. %s a %s' % (order, item.action_str, item.message)
+
                 self.window.addstr(1+index, 1, msg, mode)
+
+                if self.last_item_index < len(self.items):
+                    self.window.addstr(self.LIST_SIZE+1, 39, self.arrow_down)
 
             key = self.window.getch()
 
