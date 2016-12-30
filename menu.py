@@ -2,7 +2,7 @@
 from collections import namedtuple
 
 import curses
-from curses import panel
+import locale
 
 
 class EntityDetail(object):
@@ -15,10 +15,11 @@ class EntityDetail(object):
 
         self.entity = entity
 
-        fields = [('initial_cost', "Initial Cost"),
-                ('cost', "Monthly Cost"),
-                ('productivity_modifier', "Productivity Modifier")
-                ]
+        fields = [
+            ('initial_cost', "Initial Cost"),
+            ('cost', "Monthly Cost"),
+            ('productivity_modifier', "Productivity Modifier")
+        ]
 
         for field in fields:
             if getattr(entity, field[0]) != 0:
@@ -48,12 +49,12 @@ class EntityDetail(object):
             del self.window
             del self.iwindow
             del self
-
         except:
             pass
 
 
 class Menu(object):
+    LIST_SIZE = 10
 
     def __init__(self, items, parent_window):
         self.window = parent_window.derwin(1, 0)
@@ -61,7 +62,7 @@ class Menu(object):
         curses.noecho()
         curses.raw()
 
-        self.position = len(items)
+        self.position = 0
         self.items = items
 
         nothing = namedtuple("Nothing", 'message, action_str')
@@ -69,7 +70,14 @@ class Menu(object):
         nothing.action_str = "Do"
         self.detailwindow = None
 
-        self.items.append(nothing)
+        self.items.insert(0, nothing)
+
+        code = locale.getpreferredencoding()
+        self.arrow_up = (3*'\u2191').encode(code)
+        self.arrow_down = (3*'\u2193').encode(code)
+
+        self.first_item_index = self.position
+        self.last_item_index = self.LIST_SIZE
 
     def navigate(self, n):
         self.position += n
@@ -78,26 +86,47 @@ class Menu(object):
         elif self.position >= len(self.items):
             self.position = len(self.items)-1
 
+        if (self.position >= self.last_item_index) or (self.position < self.first_item_index):
+            self.first_item_index += n
+            self.last_item_index += n
+
         if self.detailwindow:
             self.detailwindow.delete()
         self.showdetail()
 
+    @property
+    def employees(self):
+        return self.items[self.first_item_index: self.last_item_index]
+
     def showdetail(self):
+        self.window.clear()
         if self.detailwindow:
-           self.detailwindow.delete()
-        if self.position != len(self.items)-1:
+            self.detailwindow.delete()
+        if self.position != 0:
             self.detailwindow = EntityDetail(self.items[self.position], self.window)
+
+    # TODO: refactor this
+    def select_mode(self, index):
+        if self.first_item_index == 0 and index == self.position:
+            mode = curses.A_REVERSE
+        elif (self.position - self.first_item_index) == index:
+            mode = curses.A_REVERSE
+        elif (self.position + 1 == self.last_item_index) and (index == len(self.employees) - 1):
+            mode = curses.A_REVERSE
+        else:
+            mode = curses.A_NORMAL
+
+        return mode
 
     def display(self):
         self.window.clear()
+        self.showdetail()
         while True:
             self.window.refresh()
             curses.doupdate()
-            for index, item in enumerate(self.items):
-                if index == self.position:
-                    mode = curses.A_REVERSE
-                else:
-                    mode = curses.A_NORMAL
+
+            for index, item in enumerate(self.employees):
+                mode = self.select_mode(index)
 
                 try:
                     if item.unlocked_age < 2:
@@ -105,8 +134,15 @@ class Menu(object):
                 except:
                     pass
 
-                msg = '%d. %s a %s' % (index, item.action_str, item.message)
+                if self.first_item_index > 0:
+                    self.window.addstr(0, 37, self.arrow_up)
+
+                order = self.first_item_index + index + 1
+                msg = '%d. %s a %s' % (order, item.action_str, item.message)
                 self.window.addstr(1+index, 1, msg, mode)
+
+                if self.last_item_index < len(self.items):
+                    self.window.addstr(self.LIST_SIZE+1, 37, self.arrow_down)
 
             key = self.window.getch()
 
@@ -125,7 +161,7 @@ class Menu(object):
         self.window.clear()
         curses.doupdate()
 
-
+# TODO: scrolling this
 class IdeaMenu(object):
 
     def __init__(self, items, parent_window):
