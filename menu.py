@@ -65,9 +65,11 @@ class Menu(object):
         self.position = 0
         self.items = items
 
-        nothing = namedtuple("Nothing", 'message, action_str')
+        nothing = namedtuple("Nothing", 'message, action_str', 'article')
         nothing.message = "Nothing"
         nothing.action_str = "Do"
+        nothing.article = ""
+
         self.detailwindow = None
 
         self.items.insert(0, nothing)
@@ -138,7 +140,7 @@ class Menu(object):
                     self.window.addstr(0, 20, self.arrow_up)
 
                 order = self.first_item_index + index + 1
-                msg = '%d. %s a %s' % (order, item.action_str, item.message)
+                msg = '%d. %s %s %s' % (order, item.action_str, item.article, item.message)
                 self.window.addstr(1+index, 1, msg, mode)
 
                 if self.last_item_index < len(self.items):
