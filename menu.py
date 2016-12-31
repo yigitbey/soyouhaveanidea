@@ -163,6 +163,7 @@ class Menu(object):
         self.window.clear()
         curses.doupdate()
 
+
 # TODO: scrolling this
 class IdeaMenu(object):
 
@@ -213,21 +214,3 @@ class IdeaMenu(object):
         self.window.clear()
         curses.doupdate()
 
-class MyApp(object):
-
-    def __init__(self, stdscreen):
-        self.screen = stdscreen
-        curses.curs_set(0)
-
-        items = []
-        nothing = namedtuple("Nothing", 'message', 'action_str')
-        nothing.message = "Nothing"
-        nothing.action_str = "Do"
-        items.append(nothing)
-        items.append(nothing)
-
-        main_menu = Menu(items, self.screen)
-        main_menu.display()
-
-if __name__ == '__main__':
-    curses.wrapper(MyApp)
