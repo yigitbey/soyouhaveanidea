@@ -103,4 +103,6 @@ class Entity(object, metaclass=EntityMeta):
 
         return False
 
+    def fire(self):
+        pass
 

@@ -3,7 +3,7 @@ import logging
 from time import sleep
 
 from nc import init_ui, printw, getstr, clear, alert
-from menu import Menu, IdeaMenu
+from menu import Menu, IdeaMenu, RightMenu
 from idea import Idea
 
 windows = init_ui()
@@ -128,8 +128,6 @@ def cli(objects, entities, used_resources, turn_events, last_state):
     player = objects[0]
     project = objects[1]
 
-    logger = logging.getLogger('soyu')
-    logger.debug(turn_events)
     for event in turn_events:
         a, b = alert(windows[4], str(event))
         del a
@@ -141,10 +139,9 @@ def cli(objects, entities, used_resources, turn_events, last_state):
     print_project(project, used_resources, player, last_state)
 
     unlocked_entities = [entity for entity in entities if entity.unlocked and not entity.limit_reached()]
-    limited_entities = [entity for entity in entities if entity.limit_reached()]
 
-    print_limited(objects)
-    action = select("What do you do?", unlocked_entities)
+    right_menu = print_limited(objects)
+    action = select("What do you do?", unlocked_entities, right_menu)
 
     if not action:
         return None
@@ -153,15 +150,20 @@ def cli(objects, entities, used_resources, turn_events, last_state):
 
 def print_limited(entities):
     clear(windows[2])
-    print2("You have:")
-    entities = {x.message: x for x in entities}.values()
-    for entity in entities:
-        print2("{}x {}".format(entity.current_amount, entity.message))
+    print2("You have: (Enter to fire)")
+
+    right_menu = RightMenu(entities, windows[2], which_menu="right")
+    right_menu.item_message = '{1.formatted}'
+    right_menu.init_display()
+    return right_menu
 
 
-def select(question, choices):
+def select(question, choices, right_menu):
     print1(question)
     answer_menu = Menu(choices, windows[1])
+    answer_menu.next_window = right_menu
+    right_menu.next_window = answer_menu
+
     answer = answer_menu.display()
     try:
         answer = int(answer)
