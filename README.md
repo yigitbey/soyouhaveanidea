@@ -2,10 +2,12 @@
 
 ## Download MacOS executable here:
 https://github.com/yigitbey/soyouhaveanidea/raw/master/soyouhaveanidea.zip
+Extract zip and right click `soyouhaveanidea` -> Open on first run.
 
 ---
-## Or
-You need Python3.
+
+## Or if you don't want to run as a binary
+Install python3
 
 Start with `./run` on linux, double click `run` on mac os.
 
