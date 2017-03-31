@@ -6,10 +6,10 @@ Extract zip and right click `soyouhaveanidea` -> Open on first run.
 
 ---
 
-## Or if you don't want to run as a binary
-Install python3
-
-Start with `./run` on linux, double click `run` on mac os.
+## Or if you don't want to execute a binary
+- Install python3
+- Git clone
+- Start with `./run` on linux, double click `run` on mac os.
 
 (iterm does not support resizing with xterm Control Sequences by default. If you manually start `./run` from iterm, then you need to  resize your terminal.
 
