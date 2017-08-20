@@ -120,9 +120,16 @@ def print_project(project, used_resources, player, last_state):
     print0("Design Need", end=": ")
     print_info(project, last_state, 'design_need', reverse=True)
 
-    print0("Security Issues", end=":")
+    print0("Security Issues", end=": ")
     print_info(project, last_state, 'security_issues', reverse=True)
 
+    print0()
+    print0('-------------------------')
+    print0()
+
+
+    print0("Influence", end=": ", color=4)
+    print_info(project, last_state, 'influence')
 
 def cli(objects, entities, used_resources, turn_events, last_state):
     player = objects[0]

@@ -56,7 +56,7 @@ class TempEntity(Entity):
             val = getattr(Game.project, key)
             setattr(Game.project, key, val + value)
         for key, value in self.__class__.permanent_decreases.items():
-            val = getattr(Game.project, key)
+            val = getattr(Game, key)
             setattr(Game.project, key, val - value)
 
     def turn(self):
@@ -438,6 +438,7 @@ class Project(Entity):
     security_issues = 0
     productivity = 1
     design_need = 0
+    influence = 0
     action_str = "Start"
     formatted = "Project"
     unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper]
@@ -480,6 +481,9 @@ class Project(Entity):
         if random.random() < Game.project.security_issues / 10000:
             SecurityBreach()
 
+        if random.random() < Game.project.influence/1000:    
+            Customer()
+            
         if Game.project.money <= 0:
             raise NotEnoughFundsException
 
@@ -558,6 +562,7 @@ class Customer(Entity):
         'money': 50,
         'features': 3,
         'design_need': 3,
+        'influence': 3,
     }
     formatted = "Customer"
     action_str = "Get"
@@ -596,6 +601,7 @@ class BetaCustomer(Customer):
         'money': 30,
         'features': 1,
         'design_need': 1,
+        'influence': 5,
     }
     formatted = "Beta Customer"
     tolerance = 80
