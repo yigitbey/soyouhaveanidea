@@ -241,7 +241,7 @@ def over(project, player):
     print1("---------", color=1)
     print1("GAME OVER", color=1)
     print1("---------", color=1)
-    print1("Score: {}".format(project.score))
+    print1("You are bankrupt:/ Score: {}".format(project.score))
     print1()
     print1("Press Q to exit.", color=1)
     while True:
