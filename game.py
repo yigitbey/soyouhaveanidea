@@ -612,7 +612,7 @@ class Customer(Entity):
     increases = {
         'features': 3,
         'design_need': 3,
-        'influence': 3,
+        'influence': 1,
     }
     formatted = "Customer"
     action_str = "Get"
@@ -648,6 +648,7 @@ class Customer(Entity):
             pass
         event = AlertEvent("Your Customer decided to stop using your services.\nReason: {}".format(reason))
         Game.project.turn_events.append(event)
+        Game.project.influence -= 6
 
 
 class BetaCustomer(Customer):
