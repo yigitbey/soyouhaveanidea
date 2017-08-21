@@ -99,6 +99,15 @@ class Burst(TempEntity):
     action_str = "Start"
     detail_fields = [('lasts', "Increases productivity by %50 for {} turns")]
 
+class MarketingCampaign(TempEntity):
+    unlocked = False
+    lasts = 20
+    increases = {'influence':5}
+    initial_cost = 1000
+    formatted = "Marketing Campaign"
+    action_str = "Start"
+    detail_fields = [('lasts', "Increases project influence by 5 for {} turns")]
+
 
 class Resignment(object):
     def __init__(self, person, cause):
@@ -424,6 +433,20 @@ class SecurityBreach(object):
                 c = random.choice(customers)
                 c.unsubscribe(reason="Security Breach")
 
+class SetPrice(Entity):
+    unlocked = True
+    limit = -1
+    increases={}
+    decreases={}
+    action_str = "Set"
+    formatted = "Price"
+    artikel = ""
+
+    def __init__(self, *args, **kwargs):
+        super(SetPrice, self).__init__(*args, **kwargs)
+        price = int(ui.dialog("Set monthly price to:"))
+        Game.project.price = price
+
 
 class Project(Entity):
     name = "Project 1"
@@ -438,10 +461,12 @@ class Project(Entity):
     security_issues = 0
     productivity = 1
     design_need = 0
+    initial_design_need = design_need
     influence = 0
     action_str = "Start"
     formatted = "Project"
-    unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper]
+    price = 0
+    unlocks_entities = [StudentDeveloper, ShittyDeveloper, MediocreDeveloper, SeniorDeveloper, GeniusDeveloper, SetPrice]
 
     increases = {
         'features': 5,
@@ -455,6 +480,18 @@ class Project(Entity):
         score = 1000 * ((self.features * -1 / 2) - self.bugs - self.technical_debt + self.documentation * 3 - self.server_maintenance - self.design_need + self.money) * self.productivity
         return score
 
+    @property
+    def number_of_customers(self):
+        return len(Game.get_customers())
+
+    @property
+    def each_turn_payment(self):
+        payment = 0
+        customers = Game.get_customers()
+        for customer in customers:
+            payment += customer.price_multiplier * Game.project.price
+        return payment
+
     def turn(self):
         super().turn()
         for e in Game.entities:
@@ -465,6 +502,8 @@ class Project(Entity):
         for key, value in self.increases.items():
             project_key = getattr(Game.project, key)
             setattr(Game.project, key, project_key + value)
+
+        Game.project.money += Game.project.each_turn_payment
 
         Game.project.productivity *= (1 - (Game.project.technical_debt / 20000))
 
@@ -481,13 +520,24 @@ class Project(Entity):
         if random.random() < Game.project.security_issues / 10000:
             SecurityBreach()
 
-        if random.random() < Game.project.influence/1000:    
-            Customer()
+        r = random.random()
+        k = Game.project.influence / (5*(Game.project.price+1))
+        logger.error("adsa" + str(r) + " " + str(k))
+        if r < k:
+            logger.error("customer1")
+            Game.objects.append(Customer())
+
+        if Game.project.money <= Game.project.cash_flow * -3 :
+            e = AlertEvent("Your project is running out of money. Try to get investors.")
+            Game.project.turn_events.append(e)
+
+        if Game.objects[0].money <= 50:
+            Game.project.turn_events.append(AlertEvent("You are starving!"))
             
         if Game.project.money <= 0:
             raise NotEnoughFundsException
 
-        if Game.project.features <= 0 and Game.project.bugs <= 0:
+        if Game.project.features <= 0 and Game.project.bugs <= 0 and Game.project.cash_flow > 0 and random.random() < 0.01:
             raise WinException
 
        # self.turn_events = []
@@ -499,7 +549,7 @@ class Project(Entity):
     def cash_flow(self):
         expense = sum([o.cost for o in Game.objects])
         income = sum([o.increases['money'] for o in Game.objects if 'money' in o.increases])
-        return income - expense - Game.project.server_maintenance
+        return income - expense - Game.project.server_maintenance + Game.project.each_turn_payment
 
 
 class Investor(Entity):
@@ -557,9 +607,9 @@ class COO(ProjectEmployee):
 
 
 class Customer(Entity):
-    limit = 20
+    limit = -1
+    price_multiplier = 1
     increases = {
-        'money': 50,
         'features': 3,
         'design_need': 3,
         'influence': 3,
@@ -571,6 +621,7 @@ class Customer(Entity):
 
     def __init__(self, *args, **kwargs):
         super(Customer, self).__init__(*args, **kwargs)
+        logger.error("customer created")
         self.tolerance = random.randrange(20, 80)
         SecurityBreach.unlocked = True
 
@@ -586,6 +637,10 @@ class Customer(Entity):
         if Game.project.bugs > 1000 * self.tolerance/100:
             self.unsubscribe(reason="High amount of bugs")
 
+        if Game.project.design_need > 1000 * self.tolerance/100:
+            self.unsubscribe(reason="Bad UX")
+
+
     def unsubscribe(self, reason):
         try:
             Game.objects.remove(self)
@@ -597,8 +652,8 @@ class Customer(Entity):
 
 class BetaCustomer(Customer):
     limit = 5
+    price_multiplier = 0.8
     increases = {
-        'money': 30,
         'features': 1,
         'design_need': 1,
         'influence': 5,
@@ -624,10 +679,14 @@ class PublicRelease(Release):
         'design_need': 50,
         'server_maintenance': 100,
     }
-    unlocks_entities = [Customer]
+    unlocks_entities = [MarketingCampaign]
     formatted = "Golden Version"
     action_str = "Release"
     locks_entities = [BetaCustomer]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        Game.project.influence += 50
 
 
 class BetaRelease(Release):
@@ -675,6 +734,7 @@ class Game(object):
                 COO, SmallInvestor, BigInvestor,
                 Burst,
                 BetaCustomer, Customer, PublicRelease, BetaRelease,
+                SetPrice, MarketingCampaign
                 ]
     last_state = None
 

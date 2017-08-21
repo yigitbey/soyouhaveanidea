@@ -128,8 +128,23 @@ def print_project(project, used_resources, player, last_state):
     print0()
 
 
+    print0("Customers", end=": ", color=4)
+    print0(project.number_of_customers)
     print0("Influence", end=": ", color=4)
     print_info(project, last_state, 'influence')
+    print0("Monthly Price", end=": ", color=4)
+    print0(project.price)
+
+
+def dialog(text):
+    a,b  = alert(windows[4], str(text), wait=False)
+    response = read(windows[4])
+
+    del a
+    del b
+    clear(windows[1])
+
+    return response    
 
 def cli(objects, entities, used_resources, turn_events, last_state):
     player = objects[0]

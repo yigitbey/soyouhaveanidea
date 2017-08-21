@@ -92,7 +92,7 @@ def printw(window, text="", end="\n", color=0):
     window.refresh()
 
 
-def alert(window, text):
+def alert(window, text, wait=True):
     y, x = window.getmaxyx()
     w, h = 50, 6
     alertb = window.subwin(h, w, int(y/2-h/2), int(x/2-w/2))
@@ -104,8 +104,9 @@ def alert(window, text):
     alert.refresh()
     beep()
     flash()
-    alert.getch()
-    #getstr(alert, empty_ok=True)
+    if wait:
+        alert.getch()
+
     alert.erase()
     alertb.erase()
 
