@@ -58,11 +58,15 @@ def init_ui():
 
     middle_win = win.subwin(height-5, middle_win_width, 2, left_win_width+2)
     middle_win.border(0, 0, 0, 0, 0, 0, 0, 0)
+    for x in range(6, 20, 2):
+        middle_win.addstr(x, middle_win_width-1, ">")
     middle_win.refresh()
     middle_win = middle_win.derwin(height-7, middle_win_width-2, 1, 1)
 
     right_win = win.subwin(height-5, right_win_width, 2, left_win_width + middle_win_width + 2)
     right_win.border(0, 0, 0, 0, 0, 0, 0, 0)
+    for x in range(7, 21, 2):
+        right_win.addstr(x, 0, "<")
     right_win.refresh()
     right_win = right_win.derwin(height-7, right_win_width-2, 1, 1)
 
@@ -114,6 +118,7 @@ def alert(window, text, wait=True):
 
 
 def getstr(window, empty_ok=False):
+    curses.curs_set(1)
     curses.echo()
     window.clear()
     window.move(0, 0)
@@ -126,6 +131,7 @@ def getstr(window, empty_ok=False):
     window.clear()
     window.refresh()
     window.move(0, 0)
+    curses.curs_set(0)
     return response
 
 

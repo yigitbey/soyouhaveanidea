@@ -144,6 +144,11 @@ class Person(Entity):
         Game.objects.remove(self)
         Game.project.turn_events.append(Resignment(self, cause))
 
+    def fire(self):
+        self.drains_from.trade(self, 'money', self.cost * 5)
+        Game.objects.remove(self)
+        del self
+
 
 class ProjectEmployee(Person):
     formatted = "Employee"
@@ -721,6 +726,10 @@ class Boss(Person):
     @property
     def cash_flow(self):
         return (self.draining['money'] - self.cost) * -1
+
+    def fire(self):
+        pass
+
 
 class Game(object):
 

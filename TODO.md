@@ -8,4 +8,4 @@
 - [ ] Company Stock
 - [ ] Beurocracy
 - [ ] Balance
-- [ ] Scroolling on Menu Items
+- [x] Scroolling on Menu Items

@@ -30,6 +30,7 @@ class Entity(object, metaclass=EntityMeta):
     decreases = {}
     productivity_modifier = 0
     detail_fields = []
+    article = "a"
 
     def __init__(self, project=None, inventory=inventory, draining=drains, replenishing=replenishes):
 
@@ -102,4 +103,6 @@ class Entity(object, metaclass=EntityMeta):
 
         return False
 
+    def fire(self):
+        pass
 
