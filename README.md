@@ -4,6 +4,8 @@
 https://github.com/yigitbey/soyouhaveanidea/raw/master/soyouhaveanidea.zip
 Extract zip and right click `soyouhaveanidea` -> Open on first run.
 
+Executable is not built regularly, for the latest version pull repository.
+
 ---
 
 ## Or if you don't want to execute a binary
