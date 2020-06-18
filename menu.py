@@ -67,7 +67,7 @@ class Menu(object):
         self.items = items
 
         if self.which_menu == 'left':
-            nothing = namedtuple("Nothing", 'message, action_str', 'article', 'formatted')
+            nothing = namedtuple("Nothing", 'message, action_str, article, formatted')
             nothing.message = "Nothing"
             nothing.action_str = "Do"
             nothing.article = ""
